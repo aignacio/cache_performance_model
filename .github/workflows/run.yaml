@@ -77,11 +77,11 @@ jobs:
         python-version: '3.12'
     - name: Install deps
       run: >-
-        pip install numpy
+        pip install wheel setuptools numpy
     - name: Install pypa/setuptools
       run: >-
         python -m
-        pip install wheel
+        pip install wheel setuptools
     - name: Build a binary wheel
       run: >-
         python setup.py sdist bdist_wheel
