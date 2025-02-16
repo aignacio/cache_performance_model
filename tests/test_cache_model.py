@@ -101,17 +101,20 @@ def test_cache_comparison():
     seed = 42
 
     caches.append(DirectMappedCache(cache_line_bytes=64))
-    caches.append(DirectMappedCache(cache_size_kib=1, cache_line_bytes=64))
-    caches.append(SetAssociativeCache(n_way=4, cache_size_kib=4, cache_line_bytes=64))
     caches.append(
-    SetAssociativeCache(
-    n_way=4, cache_size_kib=4, replacement_policy=ReplacementPolicy.LRU
-    )
+        SetAssociativeCache(
+            n_way=4, cache_size_kib=4, replacement_policy=ReplacementPolicy.RANDOM
+        )
     )
     caches.append(
-    SetAssociativeCache(
-    n_way=4, cache_size_kib=4, replacement_policy=ReplacementPolicy.NMRU
+        SetAssociativeCache(
+            n_way=4, cache_size_kib=4, replacement_policy=ReplacementPolicy.LRU
+        )
     )
+    caches.append(
+        SetAssociativeCache(
+            n_way=4, cache_size_kib=4, replacement_policy=ReplacementPolicy.NMRU
+        )
     )
     caches.append(
         SetAssociativeCache(
