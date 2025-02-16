@@ -1,0 +1,6 @@
+[run]
+branch = True
+
+[report]
+omit =
+  cache_performance_model/types.py

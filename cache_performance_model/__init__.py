@@ -5,6 +5,6 @@
 # Author            : Anderson I. da Silva (aignacio) <anderson@aignacio.com>
 # Date              : 16.02.2025
 # Last Modified Date: 16.02.2025
-from .cache_model import Cache, DirectMappedCache, SetAssociativeCache 
+from .cache_model import Cache, DirectMappedCache, SetAssociativeCache
 from .types import AccessType, ReplacementPolicy
 from .types import Total, Miss, CacheUnexpectedCaller

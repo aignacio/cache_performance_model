@@ -13,7 +13,7 @@ with codecs.open(os.path.join(here, "README.md"), encoding="utf-8") as fh:
 # Setting up
 setup(
     name="cache_performance_model",
-    packages=find_namespace_packages(include=["cache_performance_model.*"]),
+    packages=find_packages(),
     version=__version__,
     author="aignacio (Anderson Ignacio)",
     author_email="<anderson@aignacio.com>",

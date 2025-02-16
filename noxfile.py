@@ -26,6 +26,7 @@ def run(session):
         "py.test",
         "--log-cli-level=DEBUG",
         # "--log-cli-level=INFO",
+        "--cov=cache_performance_model",
         "--cov-branch",
         "--cov-report=xml",
         # "-rf",
@@ -36,7 +37,7 @@ def run(session):
     )
 
 
-# @nox.session(python=["3.12"], reuse_venv=True)
-# def lint(session):
-    # session.install("flake8")
-    # session.run("flake8")
+@nox.session(python=["3.12"], reuse_venv=True)
+def lint(session):
+    session.install("flake8")
+    session.run("flake8")

@@ -148,7 +148,7 @@ class Cache(ABC):
 
     def stats(self):
         """Print cache statistics"""
-        print(f"----------------------------------")
+        print(f"----------- {self.name} -----------")
         print(f" -> Name:\t{self.name}")
         print(f" -> Topology:\t{self.topology}")
         print(f" -> Replacement Policy:\t{self._rp.name}")
@@ -158,8 +158,8 @@ class Cache(ABC):
         print(f" -> Hit lat.:\t{self.hit_latency}")
         print(f" -> Miss lat.:\t{self.miss_latency}")
         print(f" -> AMAT:\t{self.amat} clock cycles")
-        print(f" -> Hit Ratio:\t{self.hit_ratio} / {self.hit_ratio*100:.2f}%")
-        print(f" -> Miss Ratio:\t{self.miss_ratio} / {self.miss_ratio*100:.2f}%")
+        print(f" -> Hit Ratio:\t{self.hit_ratio} / {self.hit_ratio * 100:.2f}%")
+        print(f" -> Miss Ratio:\t{self.miss_ratio} / {self.miss_ratio * 100:.2f}%")
         print(f" -> Miss info:\t{self._misses}")
         print(f" -> Total:\t{self._total}")
         return round(self.hit_latency + (self.miss_ratio * self.miss_latency), 3)
@@ -196,7 +196,7 @@ class DirectMappedCache(Cache):
         self.log.debug(f" - Tag size width : {self.tag_size_bits} bits")
         self.log.debug(
             f" - Ratio tag mem/data size: "
-            f"{100*self.tag_size_kib/self.cache_size_kib:.2f}%"
+            f"{100 * self.tag_size_kib / self.cache_size_kib:.2f}%"
         )
 
     def clear(self):
@@ -333,7 +333,7 @@ class SetAssociativeCache(Cache):
         self.log.debug(f" - Tag size width : {self.tag_size_bits} bits")
         self.log.debug(
             f" - Ratio tag mem/data size: "
-            f"{100*self.tag_size_kib/self.cache_size_kib:.2f}%"
+            f"{100 * self.tag_size_kib / self.cache_size_kib:.2f}%"
         )
 
     def get_replacement(self, index: int = 0):
@@ -409,7 +409,7 @@ class SetAssociativeCache(Cache):
         self.check_addr(addr)
         index = (addr >> self.cl_bits) % ((1 << self.n_lines_bits))
         tag_addr = addr >> (self.n_lines_bits + self.cl_bits)
-        empty_positions = np.where(self.valid[index] == False)[0]
+        empty_positions = np.where(self.valid[index] == False)[0]  # noqa: E712
 
         if np.any(self.valid[index]):
             found = False
@@ -474,7 +474,7 @@ class SetAssociativeCache(Cache):
         self.check_addr(addr)
         index = (addr >> self.cl_bits) % ((1 << self.n_lines_bits))
         tag_addr = addr >> (self.n_lines_bits + self.cl_bits)
-        empty_positions = np.where(self.valid[index] == False)[0]
+        empty_positions = np.where(self.valid[index] == False)[0]  # noqa: E712
 
         if np.any(self.valid[index]):
             found = False

@@ -48,8 +48,8 @@ class Total:
 
     def __repr__(self):
         return (
-            f"{self.sum} (read={self.read} / {100*self.read/self.sum:.2f}%, "
-            f"write={self.write} / {100*self.write/self.sum:.2f}%)"
+            f"{self.sum} (read={self.read} / {100 * self.read / self.sum:.2f}%, "
+            f"write={self.write} / {100 * self.write / self.sum:.2f}%)"
         )
 
 
