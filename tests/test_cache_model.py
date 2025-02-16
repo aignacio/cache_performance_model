@@ -94,10 +94,24 @@ def strided_access_pattern(cache, num_accesses, stride=64):
         base_address += stride  # Move by stride each time
 
 
+# Test function 5: **Strided Access Pattern**
+def conflict_access_pattern(cache, num_accesses, stride=64):
+    print("\nConflict Access Pattern:")
+    base_address = 0
+    transaction_type = [random.choice(["read", "write"]) for _ in range(num_accesses)]
+    for i in range(num_accesses):
+        address = base_address + i * (4 * 1024)
+        # transaction_type = random.choice(['read', 'write'])
+        if transaction_type[i] == "read":
+            cache.read(address)
+        else:
+            cache.write(address)
+
+
 def test_cache_comparison():
     caches = []
 
-    num_accesses = 100
+    num_accesses = 500
     seed = 42
 
     caches.append(DirectMappedCache(cache_line_bytes=64))
@@ -128,6 +142,7 @@ def test_cache_comparison():
         ("Temporal Locality", temporal_locality_pattern),
         ("Random", random_access_pattern),
         ("Strided", strided_access_pattern),
+        ("Conflict", conflict_access_pattern),
     ]
 
     for pattern_name, pattern_func in access_patterns:
