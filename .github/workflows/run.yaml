@@ -68,9 +68,18 @@ jobs:
     needs: tests
     if: |
       always() &&
-      (needs.tests.result == 'success')
+      (needs.tests.result == 'success') &&
+      contains(steps.check_version_file.outputs.changed_files, 'cache_performance_model/version.py')
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v3
+    - name: Check if version.py changed
+      id: check_version_file
+      run: |
+        CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+        echo "Changed files: $CHANGED_FILES"
+        if echo "$CHANGED_FILES" | grep -q "cache_performance_model/version.py"; then
+          echo "changed_files=cache_performance_model/version.py" >> $GITHUB_ENV
+        fi
     - name: Set up Python 3.12
       uses: actions/setup-python@v3
       with:

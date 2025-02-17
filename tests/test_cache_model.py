@@ -4,7 +4,7 @@
 # License           : MIT license <Check LICENSE>
 # Author            : Anderson I. da Silva (aignacio) <anderson@aignacio.com>
 # Date              : 08.02.2025
-# Last Modified Date: 16.02.2025
+# Last Modified Date: 17.02.2025
 import logging
 import random
 
@@ -117,7 +117,7 @@ def test_cache_comparison():
     caches.append(DirectMappedCache(cache_line_bytes=64))
     caches.append(
         SetAssociativeCache(
-            n_way=4, cache_size_kib=4, replacement_policy=ReplacementPolicy.RANDOM
+            n_way=1, cache_size_kib=4, replacement_policy=ReplacementPolicy.RANDOM
         )
     )
     caches.append(

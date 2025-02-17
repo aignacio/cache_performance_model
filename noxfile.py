@@ -29,6 +29,7 @@ def run(session):
         "--cov=cache_performance_model",
         "--cov-branch",
         "--cov-report=xml",
+        # "--cov-report=html",
         # "-rf",
         "-rP",
         "-n",

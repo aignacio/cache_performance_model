@@ -4,7 +4,7 @@
 # License           : MIT license <Check LICENSE>
 # Author            : Anderson I. da Silva (aignacio) <anderson@aignacio.com>
 # Date              : 16.02.2025
-# Last Modified Date: 16.02.2025
+# Last Modified Date: 17.02.2025
 import enum
 
 
@@ -29,6 +29,15 @@ class CacheUnexpectedCaller(Exception):
         self, message="Hit/Miss needs to be called from read or write methods"
     ):
         self.message = message
+        super().__init__(self.message)
+
+
+class CacheIllegalParameter(Exception):
+    """Exception raised when illegal parameter is set"""
+
+    def __init__(self, param_name: str, message="Parameter {param} value is illegal"):
+        self.param = param_name
+        self.message = message.format(param=param_name)
         super().__init__(self.message)
 
 

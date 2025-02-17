@@ -4,7 +4,7 @@
 # License           : MIT license <Check LICENSE>
 # Author            : Anderson I. da Silva (aignacio) <anderson@aignacio.com>
 # Date              : 07.02.2025
-# Last Modified Date: 16.02.2025
+# Last Modified Date: 17.02.2025
 import logging
 import math
 import numpy as np
@@ -14,7 +14,7 @@ import random
 from typing import Any
 from abc import ABC, abstractmethod
 from .types import AccessType, ReplacementPolicy
-from .types import Total, Miss, CacheUnexpectedCaller
+from .types import Total, Miss, CacheUnexpectedCaller, CacheIllegalParameter
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s"
@@ -302,6 +302,9 @@ class SetAssociativeCache(Cache):
         self._topology = "set_associative"
         self._n_way = n_way
         self._rp = replacement_policy
+
+        if n_way < 2:
+            raise CacheIllegalParameter("n_way")
 
         self.cache_size_set = self.cache_size_kib * 1024 // self._n_way  # in bytes
         self.n_lines = (self.cache_size_set) // self.cache_line_bytes
