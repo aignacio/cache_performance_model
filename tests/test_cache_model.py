@@ -117,7 +117,7 @@ def test_cache_comparison():
     caches.append(DirectMappedCache(cache_line_bytes=64))
     caches.append(
         SetAssociativeCache(
-            n_way=1, cache_size_kib=4, replacement_policy=ReplacementPolicy.RANDOM
+            n_way=4, cache_size_kib=4, replacement_policy=ReplacementPolicy.RANDOM
         )
     )
     caches.append(
