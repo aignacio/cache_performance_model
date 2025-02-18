@@ -4,7 +4,7 @@
 # License           : MIT license <Check LICENSE>
 # Author            : Anderson I. da Silva (aignacio) <anderson@aignacio.com>
 # Date              : 07.02.2025
-# Last Modified Date: 17.02.2025
+# Last Modified Date: 18.02.2025
 import logging
 import math
 import numpy as np
@@ -200,9 +200,7 @@ class DirectMappedCache(Cache):
         )
 
     def clear(self):
-        self._hits = 0
-        self._misses = Miss()
-        self._total.sum = (0, 0)
+        super().clear()
         self.tags = np.full((self.n_lines, 1), -1, dtype=self.dtype)
         self.valid = np.zeros(self.n_lines, dtype=bool)  # Valid bits
         self.dirty = np.zeros(self.n_lines, dtype=bool)  # Dirty bits
@@ -305,6 +303,8 @@ class SetAssociativeCache(Cache):
 
         if n_way < 2:
             raise CacheIllegalParameter("n_way")
+        if replacement_policy == ReplacementPolicy.NONE:
+            raise CacheIllegalParameter("replacement_policy")
 
         self.cache_size_set = self.cache_size_kib * 1024 // self._n_way  # in bytes
         self.n_lines = (self.cache_size_set) // self.cache_line_bytes
@@ -323,6 +323,8 @@ class SetAssociativeCache(Cache):
             self.lru = np.tile(init_row, (self.n_lines, 1))
         elif self._rp == ReplacementPolicy.NMRU:
             self.nmru = np.zeros((self.n_lines, 1), dtype=int)
+        elif self._rp == ReplacementPolicy.PLRU:
+            self.plru_tree = np.zeros((self.n_lines, self._n_way - 1), dtype=bool)
 
         self.log = logging.getLogger("SetAssociativeCache")
         self.log.info("Created new Set Associative Cache - Writeback")
@@ -351,7 +353,12 @@ class SetAssociativeCache(Cache):
             return self.lru[index].argmin()
         elif self._rp == ReplacementPolicy.NMRU:
             return self.nmru[index]
-        # elif self._rp == ReplacementPolicy.PLRU:
+        elif self._rp == ReplacementPolicy.PLRU:
+            node = 0
+            for level in range(self._n_way.bit_length() - 1):  # log2(n_way) levels
+                direction = self.plru_tree[index, node]
+                node = (2 * node) + 1 + direction  # Move left (0) or right (1)
+            return node - (self._n_way - 1)  # Convert tree node to cache way index
 
     def track_access(
         self, index: int = 0, way: int = 0, access_type: AccessType = AccessType.HIT
@@ -376,7 +383,7 @@ class SetAssociativeCache(Cache):
                 # Decrease values that are greater than the accessed value
                 arr[arr > accessed_value] -= 1
                 # Move accessed element to the highest position
-                arr[way] = arr.max() + 1
+                arr[way] = self._n_way - 1
                 self.lru[index] = arr
             self.log.debug(f" [LRU] {self.lru[index]}")
             assert np.all(
@@ -392,14 +399,20 @@ class SetAssociativeCache(Cache):
             self.log.debug(
                 f" [NMRU] Not the most recently used {self.nmru[index]} (mru+1)"
             )
+        elif self._rp == ReplacementPolicy.PLRU:
+            node = 0
+            for level in range(self._n_way.bit_length() - 1):
+                direction = way >> (self._n_way.bit_length() - 2 - level) & 1
+                self.plru_tree[index, node] = direction  # Update the node
+                node = (2 * node) + 1 + direction  # Move to next level
+            self.log.debug(f" [PLRU] Tree @ index {index} --> {self.plru_tree[index]}")
 
     def clear(self):
-        self._hits = 0
-        self._misses = Miss()
-        self._total.sum = (0, 0)
+        super().clear()
         self.tags = np.full((self.n_lines, self._n_way), -1, dtype=self.dtype)
         self.valid = np.zeros((self.n_lines, self._n_way), dtype=bool)
         self.dirty = np.zeros((self.n_lines, self._n_way), dtype=bool)
+
         if self._rp == ReplacementPolicy.FIFO:
             self.fifo = np.zeros((self.n_lines, 1), dtype=int)
         elif self._rp == ReplacementPolicy.LRU:
@@ -407,6 +420,8 @@ class SetAssociativeCache(Cache):
             self.lru = np.tile(init_row, (self.n_lines, 1))
         elif self._rp == ReplacementPolicy.NMRU:
             self.nmru = np.zeros((self.n_lines, 1), dtype=int)
+        elif self._rp == ReplacementPolicy.PLRU:
+            self.plru_tree = np.zeros((self.n_lines, self._n_way - 1), dtype=bool)
 
     def read(self, addr: int):
         self.check_addr(addr)

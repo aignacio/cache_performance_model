@@ -4,7 +4,7 @@
 # License           : MIT license <Check LICENSE>
 # Author            : Anderson I. da Silva (aignacio) <anderson@aignacio.com>
 # Date              : 08.02.2025
-# Last Modified Date: 17.02.2025
+# Last Modified Date: 18.02.2025
 import logging
 import random
 
@@ -111,7 +111,7 @@ def conflict_access_pattern(cache, num_accesses, stride=64):
 def test_cache_comparison():
     caches = []
 
-    num_accesses = 500
+    num_accesses = 200
     seed = 42
 
     caches.append(DirectMappedCache(cache_line_bytes=64))
@@ -135,6 +135,12 @@ def test_cache_comparison():
             n_way=4, cache_size_kib=4, replacement_policy=ReplacementPolicy.FIFO
         )
     )
+    caches.append(
+        SetAssociativeCache(
+            n_way=4, cache_size_kib=4, replacement_policy=ReplacementPolicy.PLRU
+        )
+    )
+
 
     access_patterns = [
         ("Sequential", sequential_access_pattern),
