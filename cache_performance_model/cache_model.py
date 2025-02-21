@@ -4,7 +4,7 @@
 # License           : MIT license <Check LICENSE>
 # Author            : Anderson I. da Silva (aignacio) <anderson@aignacio.com>
 # Date              : 07.02.2025
-# Last Modified Date: 18.02.2025
+# Last Modified Date: 21.02.2025
 import logging
 import math
 import numpy as np
@@ -301,13 +301,16 @@ class SetAssociativeCache(Cache):
         self._n_way = n_way
         self._rp = replacement_policy
 
+        # Basic checks
         if n_way < 2:
+            raise CacheIllegalParameter("n_way")
+        if (n_way % 2) != 0 and replacement_policy == ReplacementPolicy.PLRU:
             raise CacheIllegalParameter("n_way")
         if replacement_policy == ReplacementPolicy.NONE:
             raise CacheIllegalParameter("replacement_policy")
 
         self.cache_size_set = self.cache_size_kib * 1024 // self._n_way  # in bytes
-        self.n_lines = (self.cache_size_set) // self.cache_line_bytes
+        self.n_lines = self.cache_size_set // self.cache_line_bytes
         self.n_lines_bits = self.clog2(self.n_lines)
         self.tag_size_bits = self.ADDR_WIDTH - self.n_lines_bits - self.cl_bits
         self.tag_size_kib = ((self.tag_size_bits * self.n_lines) / 8) / 1024
@@ -556,3 +559,68 @@ class SetAssociativeCache(Cache):
                 f" {hex(addr)} / Line {index}"
                 f" / Allocated way {way}"
             )
+
+class FullyAssociativeCache(Cache):
+    _inst_cnt = 0
+
+    def __init__(
+        self,
+        name: str = None,
+        replacement_policy: ReplacementPolicy = ReplacementPolicy.RANDOM,
+        *args,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        if name is None:  # Default name handling
+            name = f"fully_associative_cache_{SetAssociativeCache._inst_cnt}"
+        SetAssociativeCache._inst_cnt += 1
+        self._name = name
+        self._topology = "fully_associative"
+        self._rp = replacement_policy
+
+        # Basic checks
+        if replacement_policy == ReplacementPolicy.NONE:
+            raise CacheIllegalParameter("replacement_policy")
+
+        self.cache_size_set = self.cache_size_kib * 1024 # in bytes
+        self.n_lines = self.cache_size_set // self.cache_line_bytes
+        self.n_lines_bits = self.clog2(self.n_lines)
+        self.tag_size_bits = self.ADDR_WIDTH - self.n_lines_bits - self.cl_bits
+        self.tag_size_kib = ((self.tag_size_bits * self.n_lines) / 8) / 1024
+
+        # Memories
+        self.tags = np.full((self.n_lines, 1), -1, dtype=self.dtype)
+        self.valid = np.zeros(self.n_lines , dtype=bool)
+        self.dirty = np.zeros(self.n_lines , dtype=bool)
+
+        if self._rp == ReplacementPolicy.FIFO:
+            self.fifo = np.zeros((self.n_lines, 1), dtype=int)
+
+        self.log = logging.getLogger("FullyAssociativeCache")
+        self.log.info("Created new fully Associative Cache - Writeback")
+        self.log.info(f" - Instance name  : {self.name}")
+        self.log.info(f" - Replacement Policy  : {self._rp.name}")
+        self.log.info(f" - Cache size kib : {self.cache_size_kib} KiB")
+        self.log.info(f" - Tag size kib   : {self.tag_size_kib:.3f} KiB")
+        self.log.debug(f" - Cache line size: {self.cache_line_bytes} bytes")
+        self.log.debug(f" - Number of lines : {self.n_lines}")
+        self.log.debug(f" - Tag size width : {self.tag_size_bits} bits")
+        self.log.debug(
+            f" - Ratio tag mem/data size: "
+            f"{100 * self.tag_size_kib / self.cache_size_kib:.2f}%"
+        )
+
+    def clear(self):
+        super().clear()
+        self.tags = np.full((self.n_lines, self._n_way), -1, dtype=self.dtype)
+        self.valid = np.zeros((self.n_lines, self._n_way), dtype=bool)
+        self.dirty = np.zeros((self.n_lines, self._n_way), dtype=bool)
+
+        if self._rp == ReplacementPolicy.FIFO:
+            self.fifo = np.zeros((self.n_lines, 1), dtype=int)
+
+    def read(self, addr: int):
+        self.check_addr(addr)
+        index = (addr >> self.cl_bits) % ((1 << self.n_lines_bits))
+        tag_addr = addr >> (self.n_lines_bits + self.cl_bits)
+     
