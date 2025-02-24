@@ -571,7 +571,7 @@ class FullyAssociativeCache(Cache):
     ) -> None:
         super().__init__(*args, **kwargs)
         if name is None:  # Default name handling
-            name = f"fully_associative_cache_{SetAssociativeCache._inst_cnt}"
+            name = f"fully_associative_cache_{FullyAssociativeCache._inst_cnt}"
         SetAssociativeCache._inst_cnt += 1
         self._name = name
         self._topology = "fully_associative"
@@ -581,7 +581,9 @@ class FullyAssociativeCache(Cache):
         if replacement_policy == ReplacementPolicy.NONE:
             raise CacheIllegalParameter("replacement_policy")
         if (self.n_lines % 2) != 0 and replacement_policy == ReplacementPolicy.PLRU:
-            raise CacheIllegalParameter("cache_size_kib") # PLRU requires even entries lines
+            raise CacheIllegalParameter(
+                "cache_size_kib"
+            )  # PLRU requires even entries lines
 
         self.cache_size_set = self.cache_size_kib * 1024  # in bytes
         self.n_lines = self.cache_size_set // self.cache_line_bytes
@@ -678,16 +680,16 @@ class FullyAssociativeCache(Cache):
             assert np.all(
                 arr < self.n_lines
             ), f" [LRU] All elements must be smaller than NO ENTRIES: {self.n_lines}"
-            assert len(arr) == len(np.unique(arr)), f" [LRU] All elements must be unique {arr}"
+            assert len(arr) == len(
+                np.unique(arr)
+            ), f" [LRU] All elements must be unique {arr}"
         elif self._rp == ReplacementPolicy.NMRU:
             if index + 1 == self.n_lines:
                 self.nmru = 0
             else:
                 # Get the next one but not the most recently used
                 self.nmru = index + 1
-            self.log.debug(
-                f" [NMRU] Not the most recently used {self.nmru} (mru+1)"
-            )
+            self.log.debug(f" [NMRU] Not the most recently used {self.nmru} (mru+1)")
         elif self._rp == ReplacementPolicy.PLRU:
             node = 0
             for level in range(self.n_lines.bit_length() - 1):
@@ -695,7 +697,6 @@ class FullyAssociativeCache(Cache):
                 self.plru_tree[node] = direction  # Update the node
                 node = (2 * node) + 1 + direction  # Move to next level
             self.log.debug(f" [PLRU] Tree @ index {index} --> {self.plru_tree}")
-
 
     def read(self, addr: int):
         self.check_addr(addr)
@@ -714,11 +715,9 @@ class FullyAssociativeCache(Cache):
             replacement_entry = self.get_replacement()
             self.track_access(replacement_entry, AccessType.MISS)
             self.tags[replacement_entry] = tag_addr
-            self.valid[replacement_policy] = True
+            self.valid[replacement_entry] = True
             self.update_miss("capacity", 1)
-            self.log.debug(
-                f" [READ - {self.name}] Capacity miss @ Address {hex(addr)}"
-            )
+            self.log.debug(f" [READ - {self.name}] Capacity miss @ Address {hex(addr)}")
         else:  # If there's not hit and we're NOT full
             empty_position = np.where(self.valid == False)[0][0]  # noqa: E712
             self.track_access(empty_position, AccessType.MISS)
@@ -747,8 +746,8 @@ class FullyAssociativeCache(Cache):
             replacement_entry = self.get_replacement()
             self.track_access(replacement_entry, AccessType.MISS)
             self.tags[replacement_entry] = tag_addr
-            self.valid[replacement_policy] = True
-            self.dirty[replacement_policy] = True
+            self.valid[replacement_entry] = True
+            self.dirty[replacement_entry] = True
             self.update_miss("capacity", 1)
             self.log.debug(
                 f" [WRITE - {self.name}] Capacity miss @ Address {hex(addr)}"
