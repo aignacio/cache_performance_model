@@ -577,6 +577,11 @@ class FullyAssociativeCache(Cache):
         self._topology = "fully_associative"
         self._rp = replacement_policy
 
+        self.cache_size_set = self.cache_size_kib * 1024  # in bytes
+        self.n_lines = self.cache_size_set // self.cache_line_bytes
+        self.tag_size_bits = self.ADDR_WIDTH - self.cl_bits
+        self.tag_size_kib = ((self.tag_size_bits * self.n_lines) / 8) / 1024
+
         # Basic checks
         if replacement_policy == ReplacementPolicy.NONE:
             raise CacheIllegalParameter("replacement_policy")
@@ -584,11 +589,6 @@ class FullyAssociativeCache(Cache):
             raise CacheIllegalParameter(
                 "cache_size_kib"
             )  # PLRU requires even entries lines
-
-        self.cache_size_set = self.cache_size_kib * 1024  # in bytes
-        self.n_lines = self.cache_size_set // self.cache_line_bytes
-        self.tag_size_bits = self.ADDR_WIDTH - self.cl_bits
-        self.tag_size_kib = ((self.tag_size_bits * self.n_lines) / 8) / 1024
 
         # Memories
         self.tags = np.full((self.n_lines, 1), -1, dtype=self.dtype)

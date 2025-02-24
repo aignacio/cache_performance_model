@@ -4,13 +4,11 @@
 # License           : MIT license <Check LICENSE>
 # Author            : Anderson I. da Silva (aignacio) <anderson@aignacio.com>
 # Date              : 08.02.2025
-# Last Modified Date: 16.02.2025
+# Last Modified Date: 24.02.2025
 import nox
 
 
-@nox.session(
-    python=["3.12"], reuse_venv=True
-)
+@nox.session(python=["3.12"], reuse_venv=True)
 def run(session):
     session.env["AUTHOR"] = "Anderson Ignacio da Silva"
     session.install(
@@ -42,3 +40,11 @@ def run(session):
 def lint(session):
     session.install("flake8")
     session.run("flake8")
+
+
+@nox.session(reuse_venv=True)
+def docs(session):
+    """Build the Sphinx documentation."""
+    session.install("sphinx", "sphinx_rtd_theme", "sphinx-autodoc-typehints")
+    session.run("sphinx-apidoc", "-o", "docs/source", "my_project")
+    session.run("sphinx-build", "-b", "html", "docs", "docs/_build/html")
