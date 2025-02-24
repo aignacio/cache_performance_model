@@ -4,7 +4,7 @@
 # License           : MIT license <Check LICENSE>
 # Author            : Anderson I. da Silva (aignacio) <anderson@aignacio.com>
 # Date              : 07.02.2025
-# Last Modified Date: 21.02.2025
+# Last Modified Date: 24.02.2025
 import logging
 import math
 import numpy as np
@@ -366,9 +366,7 @@ class SetAssociativeCache(Cache):
     def track_access(
         self, index: int = 0, way: int = 0, access_type: AccessType = AccessType.HIT
     ):
-        self.log.debug(
-            f" [UPDATE REPLACEMENT] Line = {index} / Policy = {self._rp.name}"
-        )
+        self.log.debug(f" [TRACK ACCESS] Line = {index} / Policy = {self._rp.name}")
 
         if self._rp == ReplacementPolicy.RANDOM:
             pass
@@ -560,6 +558,7 @@ class SetAssociativeCache(Cache):
                 f" / Allocated way {way}"
             )
 
+
 class FullyAssociativeCache(Cache):
     _inst_cnt = 0
 
@@ -581,20 +580,27 @@ class FullyAssociativeCache(Cache):
         # Basic checks
         if replacement_policy == ReplacementPolicy.NONE:
             raise CacheIllegalParameter("replacement_policy")
+        if (self.n_lines % 2) != 0 and replacement_policy == ReplacementPolicy.PLRU:
+            raise CacheIllegalParameter("cache_size_kib") # PLRU requires even entries lines
 
-        self.cache_size_set = self.cache_size_kib * 1024 # in bytes
+        self.cache_size_set = self.cache_size_kib * 1024  # in bytes
         self.n_lines = self.cache_size_set // self.cache_line_bytes
-        self.n_lines_bits = self.clog2(self.n_lines)
-        self.tag_size_bits = self.ADDR_WIDTH - self.n_lines_bits - self.cl_bits
+        self.tag_size_bits = self.ADDR_WIDTH - self.cl_bits
         self.tag_size_kib = ((self.tag_size_bits * self.n_lines) / 8) / 1024
 
         # Memories
         self.tags = np.full((self.n_lines, 1), -1, dtype=self.dtype)
-        self.valid = np.zeros(self.n_lines , dtype=bool)
-        self.dirty = np.zeros(self.n_lines , dtype=bool)
+        self.valid = np.zeros(self.n_lines, dtype=bool)
+        self.dirty = np.zeros(self.n_lines, dtype=bool)
 
         if self._rp == ReplacementPolicy.FIFO:
-            self.fifo = np.zeros((self.n_lines, 1), dtype=int)
+            self.fifo = 0
+        elif self._rp == ReplacementPolicy.LRU:
+            self.lru = np.arange(0, self.n_lines)
+        elif self._rp == ReplacementPolicy.NMRU:
+            self.nmru = 0
+        elif self._rp == ReplacementPolicy.PLRU:
+            self.plru_tree = np.zeros((self.n_lines - 1), dtype=bool)
 
         self.log = logging.getLogger("FullyAssociativeCache")
         self.log.info("Created new fully Associative Cache - Writeback")
@@ -612,15 +618,148 @@ class FullyAssociativeCache(Cache):
 
     def clear(self):
         super().clear()
-        self.tags = np.full((self.n_lines, self._n_way), -1, dtype=self.dtype)
-        self.valid = np.zeros((self.n_lines, self._n_way), dtype=bool)
-        self.dirty = np.zeros((self.n_lines, self._n_way), dtype=bool)
+        self.tags = np.full((self.n_lines, 1), -1, dtype=self.dtype)
+        self.valid = np.zeros(self.n_lines, dtype=bool)
+        self.dirty = np.zeros(self.n_lines, dtype=bool)
 
         if self._rp == ReplacementPolicy.FIFO:
-            self.fifo = np.zeros((self.n_lines, 1), dtype=int)
+            self.fifo = 0
+        elif self._rp == ReplacementPolicy.LRU:
+            self.lru = np.arange(0, self.n_lines)
+        elif self._rp == ReplacementPolicy.NMRU:
+            self.nmru = 0
+        elif self._rp == ReplacementPolicy.PLRU:
+            self.plru_tree = np.zeros((self.n_lines - 1), dtype=bool)
+
+    def find_matching_valid_entry(self, addr):
+        matching_indices = np.where((self.valid) & (self.tags.flatten() == addr))[0]
+        return matching_indices
+
+    def get_replacement(self, index: int = 0):
+        self.log.debug(f" [GET REPLACEMENT] Line = {index} / Policy = {self._rp.name}")
+
+        if self._rp == ReplacementPolicy.RANDOM:
+            return random.randint(0, self.n_lines - 1)
+        elif self._rp == ReplacementPolicy.FIFO:
+            return self.fifo
+        elif self._rp == ReplacementPolicy.LRU:
+            return self.lru.argmin()
+        elif self._rp == ReplacementPolicy.NMRU:
+            return self.nmru
+        elif self._rp == ReplacementPolicy.PLRU:
+            node = 0
+            for level in range(self.n_lines.bit_length() - 1):  # log2(n_lines) levels
+                direction = self.plru_tree[node]
+                node = (2 * node) + 1 + direction  # Move left (0) or right (1)
+            return node - (self.n_lines - 1)  # Convert tree node to cache way index
+
+    def track_access(self, index: int = 0, access_type: AccessType = AccessType.HIT):
+        self.log.debug(f" [TRACK ACCESS] Line = {index} / Policy = {self._rp.name}")
+
+        if self._rp == ReplacementPolicy.RANDOM:
+            pass
+        elif self._rp == ReplacementPolicy.FIFO:
+            latest = self.fifo
+            self.log.debug(f" [FIFO] Latest: {latest}")
+            if access_type == AccessType.MISS:
+                self.fifo = latest + 1 if latest + 1 < self.n_lines else 0
+                self.log.debug(f" [FIFO] Now oldest: {self.fifo}")
+        elif self._rp == ReplacementPolicy.LRU:
+            arr = self.lru
+            accessed_value = self.lru[index]
+            # If it's already the highest, do nothing
+            if accessed_value != max(arr):
+                # Decrease values that are greater than the accessed value
+                arr[arr > accessed_value] -= 1
+                # Move accessed element to the highest position
+                arr[index] = self.n_lines - 1
+                self.lru = arr
+            self.log.debug(f" [LRU] {self.lru}")
+            assert np.all(
+                arr < self.n_lines
+            ), f" [LRU] All elements must be smaller than NO ENTRIES: {self.n_lines}"
+            assert len(arr) == len(np.unique(arr)), f" [LRU] All elements must be unique {arr}"
+        elif self._rp == ReplacementPolicy.NMRU:
+            if index + 1 == self.n_lines:
+                self.nmru = 0
+            else:
+                # Get the next one but not the most recently used
+                self.nmru = index + 1
+            self.log.debug(
+                f" [NMRU] Not the most recently used {self.nmru} (mru+1)"
+            )
+        elif self._rp == ReplacementPolicy.PLRU:
+            node = 0
+            for level in range(self.n_lines.bit_length() - 1):
+                direction = index >> (self.n_lines.bit_length() - 2 - level) & 1
+                self.plru_tree[node] = direction  # Update the node
+                node = (2 * node) + 1 + direction  # Move to next level
+            self.log.debug(f" [PLRU] Tree @ index {index} --> {self.plru_tree}")
+
 
     def read(self, addr: int):
         self.check_addr(addr)
-        index = (addr >> self.cl_bits) % ((1 << self.n_lines_bits))
-        tag_addr = addr >> (self.n_lines_bits + self.cl_bits)
-     
+        tag_addr = addr >> self.cl_bits
+
+        # Look for a hit
+        index = self.find_matching_valid_entry(tag_addr)
+
+        if index.size != 0:
+            self.hits += 1
+            self.track_access(index[0], AccessType.HIT)
+            self.log.debug(
+                f" [READ - {self.name}] Hit @ Address {hex(addr)} / Line {index}"
+            )
+        elif np.all(self.valid):  # If there's no hit and we're full...
+            replacement_entry = self.get_replacement()
+            self.track_access(replacement_entry, AccessType.MISS)
+            self.tags[replacement_entry] = tag_addr
+            self.valid[replacement_policy] = True
+            self.update_miss("capacity", 1)
+            self.log.debug(
+                f" [READ - {self.name}] Capacity miss @ Address {hex(addr)}"
+            )
+        else:  # If there's not hit and we're NOT full
+            empty_position = np.where(self.valid == False)[0][0]  # noqa: E712
+            self.track_access(empty_position, AccessType.MISS)
+            self.tags[empty_position] = tag_addr
+            self.valid[empty_position] = True
+            self.update_miss("compulsory", 1)
+            self.log.debug(
+                f" [READ - {self.name}] Compulsory miss @ Address {hex(addr)}"
+            )
+
+    def write(self, addr: int):
+        self.check_addr(addr)
+        tag_addr = addr >> self.cl_bits
+
+        # Look for a hit
+        index = self.find_matching_valid_entry(tag_addr)
+
+        if index.size != 0:
+            self.hits += 1
+            self.track_access(index[0], AccessType.HIT)
+            self.dirty[index[0]] = True
+            self.log.debug(
+                f" [WRITE - {self.name}] Hit @ Address {hex(addr)} / Line {index}"
+            )
+        elif np.all(self.valid):  # If there's no hit and we're full...
+            replacement_entry = self.get_replacement()
+            self.track_access(replacement_entry, AccessType.MISS)
+            self.tags[replacement_entry] = tag_addr
+            self.valid[replacement_policy] = True
+            self.dirty[replacement_policy] = True
+            self.update_miss("capacity", 1)
+            self.log.debug(
+                f" [WRITE - {self.name}] Capacity miss @ Address {hex(addr)}"
+            )
+        else:  # If there's not hit and we're NOT full
+            empty_position = np.where(self.valid == False)[0][0]  # noqa: E712
+            self.track_access(empty_position, AccessType.MISS)
+            self.tags[empty_position] = tag_addr
+            self.valid[empty_position] = True
+            self.dirty[empty_position] = True
+            self.update_miss("compulsory", 1)
+            self.log.debug(
+                f" [WRITE - {self.name}] Compulsory miss @ Address {hex(addr)}"
+            )
