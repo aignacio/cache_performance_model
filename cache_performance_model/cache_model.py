@@ -22,6 +22,7 @@ logging.basicConfig(
 
 
 class Cache(ABC):
+    """Abstract base class for cache models."""
     ADDR_WIDTH = 32
 
     def __init__(
@@ -31,6 +32,18 @@ class Cache(ABC):
         hit_latency: int = 1,
         miss_latency: int = 10,
     ) -> None:
+        """
+        Initialize the cache with given parameters.
+
+        :param cache_line_bytes: Size of each cache line in bytes, defaults to 64
+        :type cache_line_bytes: int, optional
+        :param cache_size_kib: Size of the cache in KiB, defaults to 4
+        :type cache_size_kib: int, optional
+        :param hit_latency: Latency for a cache hit, defaults to 1
+        :type hit_latency: int, optional
+        :param miss_latency: Latency for a cache miss, defaults to 10
+        :type miss_latency: int, optional
+        """
         self.cache_line_bytes = cache_line_bytes
         self.cache_size_kib = cache_size_kib
         self.cl_bits = self.clog2(self.cache_line_bytes)
@@ -59,25 +72,61 @@ class Cache(ABC):
 
     @abstractmethod
     def read(self, addr: int):
+        """
+        Abstract method to read from the cache.
+
+        :param addr: Address to read from
+        :type addr: int
+        """
         pass
 
     @abstractmethod
     def write(self, addr: int):
+        """
+        Abstract method to write to the cache.
+
+        :param addr: Address to write to
+        :type addr: int
+        """
         pass
 
     @abstractmethod
     def clear(self):
+        """Clear the cache."""
         self._hits = 0
         self._misses = Miss()
         self._total.sum = (0, 0)
 
     def clog2(self, n):
+        """
+        Calculate the ceiling of log2.
+
+        :param n: Number to calculate log2 for
+        :type n: int
+        :return: Ceiling of log2 of n
+        :rtype: int
+        """
         return math.floor(math.log2(n + 1))
 
     def create_mask(self, x):
+        """
+        Create a bitmask of length x.
+
+        :param x: Length of the bitmask
+        :type x: int
+        :return: Bitmask of length x
+        :rtype: int
+        """
         return (1 << x) - 1
 
     def check_addr(self, address):
+        """
+        Check if the address is within the valid range.
+
+        :param address: Address to check
+        :type address: int
+        :raises ValueError: If the address is out of range
+        """
         if address > (2**Cache.ADDR_WIDTH) - 1:
             raise ValueError(
                 f"Address value is greater than max ({Cache.ADDR_WIDTH} bits)."
@@ -85,10 +134,23 @@ class Cache(ABC):
 
     @property
     def hits(self):
+        """
+        Get the number of hits.
+
+        :return: Number of hits
+        :rtype: int
+        """
         return self._hits
 
     @hits.setter
     def hits(self, value):
+        """
+        Set the number of hits and update the total read/write counters.
+
+        :param value: Number of hits
+        :type value: int
+        :raises CacheUnexpectedCaller: If the caller is not read or write method
+        """
         self._hits = value
 
         if inspect.stack()[1].function == "read":
@@ -100,10 +162,25 @@ class Cache(ABC):
 
     @property
     def misses(self):
+        """
+        Get the total number of misses.
+
+        :return: Total number of misses
+        :rtype: int
+        """
         return self._misses.sum
 
     def update_miss(self, miss_type, value):
-        """Update a specific type of miss (conflict, capacity, or compulsory)."""
+        """
+        Update a specific type of miss (conflict, capacity, or compulsory).
+
+        :param miss_type: Type of miss ('conflict', 'capacity', or 'compulsory')
+        :type miss_type: str
+        :param value: Value to increment the miss count by
+        :type value: int
+        :raises ValueError: If the miss type is invalid
+        :raises CacheUnexpectedCaller: If the caller is not read or write method
+        """
         if miss_type not in ("conflict", "capacity", "compulsory"):
             raise ValueError(
                 "Invalid miss type. Choose from 'conflict', 'capacity', or 'compulsory'."
@@ -126,28 +203,62 @@ class Cache(ABC):
 
     @property
     def hit_ratio(self):
+        """
+        Get the hit ratio.
+
+        :return: Hit ratio
+        :rtype: float
+        """
         return round(self._hits / self._total.sum, 3)
 
     @property
     def miss_ratio(self):
+        """
+        Get the miss ratio.
+
+        :return: Miss ratio
+        :rtype: float
+        """
         return round(self._misses.sum / self._total.sum, 3)
 
     @property
     def name(self):
+        """
+        Get the name of the cache.
+
+        :return: Name of the cache
+        :rtype: str
+        """
         return self._name
 
     @property
     def topology(self):
+        """
+        Get the topology of the cache.
+
+        :return: Topology of the cache
+        :rtype: str
+        """
         return self._topology
 
     @property
     def amat(self):
-        """Return the AMAT - Average Memory Access Time"""
+        """
+        Return the AMAT - Average Memory Access Time.
+
+        :return: AMAT in clock cycles
+        :rtype: float
+        """
         # Hit time + Instruction miss rate Miss penalty
         return round(self.hit_latency + (self.miss_ratio * self.miss_latency), 3)
 
     def stats(self):
-        """Print cache statistics"""
+        """
+        Print cache statistics.
+
+        :return: AMAT in clock cycles
+        :rtype: float
+        """
         print(f"----------- {self.name} -----------")
         print(f" -> Name:\t{self.name}")
         print(f" -> Topology:\t{self.topology}")
@@ -166,9 +277,16 @@ class Cache(ABC):
 
 
 class DirectMappedCache(Cache):
+    """Class for Direct Mapped Cache."""
     _inst_cnt = 0
 
     def __init__(self, name: str = None, *args, **kwargs: Any) -> None:
+        """
+        Initialize the Direct Mapped Cache with given parameters.
+
+        :param name: Name of the cache instance, defaults to None
+        :type name: str, optional
+        """
         super().__init__(*args, **kwargs)
         if name is None:  # Default name handling
             name = f"direct_mapped_cache_{DirectMappedCache._inst_cnt}"
@@ -200,12 +318,19 @@ class DirectMappedCache(Cache):
         )
 
     def clear(self):
+        """Clear the Direct Mapped Cache."""
         super().clear()
         self.tags = np.full((self.n_lines, 1), -1, dtype=self.dtype)
         self.valid = np.zeros(self.n_lines, dtype=bool)  # Valid bits
         self.dirty = np.zeros(self.n_lines, dtype=bool)  # Dirty bits
 
     def read(self, addr: int):
+        """
+        Read from the Direct Mapped Cache.
+
+        :param addr: Address to read from
+        :type addr: int
+        """
         self.check_addr(addr)
         index = (addr >> self.cl_bits) % ((1 << self.n_lines_bits))
         tag_addr = addr >> (self.n_lines_bits + self.cl_bits)
@@ -243,6 +368,12 @@ class DirectMappedCache(Cache):
             )
 
     def write(self, addr: int):
+        """
+        Write to the Direct Mapped Cache.
+
+        :param addr: Address to write to
+        :type addr: int
+        """
         self.check_addr(addr)
         index = (addr >> self.cl_bits) % ((1 << self.n_lines_bits))
         tag_addr = addr >> (self.n_lines_bits + self.cl_bits)
@@ -282,6 +413,7 @@ class DirectMappedCache(Cache):
 
 
 class SetAssociativeCache(Cache):
+    """Class for Set Associative Cache."""
     _inst_cnt = 0
 
     def __init__(
@@ -292,6 +424,17 @@ class SetAssociativeCache(Cache):
         *args,
         **kwargs: Any,
     ) -> None:
+        """
+        Initialize the Set Associative Cache with given parameters.
+
+        :param name: Name of the cache instance, defaults to None
+        :type name: str, optional
+        :param n_way: Number of ways in the set associative cache, defaults to 2
+        :type n_way: int, optional
+        :param replacement_policy: Replacement policy for the cache, defaults to ReplacementPolicy.RANDOM
+        :type replacement_policy: ReplacementPolicy, optional
+        :raises CacheIllegalParameter: If n_way is less than 2 or if replacement policy is invalid
+        """
         super().__init__(*args, **kwargs)
         if name is None:  # Default name handling
             name = f"set_associative_cache_{SetAssociativeCache._inst_cnt}"
@@ -345,6 +488,14 @@ class SetAssociativeCache(Cache):
         )
 
     def get_replacement(self, index: int = 0):
+        """
+        Get the replacement index based on the replacement policy.
+
+        :param index: Index of the cache line
+        :type index: int
+        :return: Replacement index
+        :rtype: int
+        """
         self.log.debug(f" [GET REPLACEMENT] Line = {index} / Policy = {self._rp.name}")
 
         if self._rp == ReplacementPolicy.RANDOM:
@@ -366,6 +517,16 @@ class SetAssociativeCache(Cache):
     def track_access(
         self, index: int = 0, way: int = 0, access_type: AccessType = AccessType.HIT
     ):
+        """
+        Track access for the given index and way.
+
+        :param index: Index of the cache line
+        :type index: int
+        :param way: Way of the cache line
+        :type way: int
+        :param access_type: Type of access (HIT or MISS)
+        :type access_type: AccessType
+        """
         self.log.debug(f" [TRACK ACCESS] Line = {index} / Policy = {self._rp.name}")
 
         if self._rp == ReplacementPolicy.RANDOM:
@@ -409,6 +570,7 @@ class SetAssociativeCache(Cache):
             self.log.debug(f" [PLRU] Tree @ index {index} --> {self.plru_tree[index]}")
 
     def clear(self):
+        """Clear the Set Associative Cache."""
         super().clear()
         self.tags = np.full((self.n_lines, self._n_way), -1, dtype=self.dtype)
         self.valid = np.zeros((self.n_lines, self._n_way), dtype=bool)
@@ -425,6 +587,12 @@ class SetAssociativeCache(Cache):
             self.plru_tree = np.zeros((self.n_lines, self._n_way - 1), dtype=bool)
 
     def read(self, addr: int):
+        """
+        Read from the Set Associative Cache.
+
+        :param addr: Address to read from
+        :type addr: int
+        """
         self.check_addr(addr)
         index = (addr >> self.cl_bits) % ((1 << self.n_lines_bits))
         tag_addr = addr >> (self.n_lines_bits + self.cl_bits)
@@ -490,6 +658,12 @@ class SetAssociativeCache(Cache):
             )
 
     def write(self, addr: int):
+        """
+        Write to the Set Associative Cache.
+
+        :param addr: Address to write to
+        :type addr: int
+        """
         self.check_addr(addr)
         index = (addr >> self.cl_bits) % ((1 << self.n_lines_bits))
         tag_addr = addr >> (self.n_lines_bits + self.cl_bits)
@@ -560,6 +734,7 @@ class SetAssociativeCache(Cache):
 
 
 class FullyAssociativeCache(Cache):
+    """Class for Fully Associative Cache."""
     _inst_cnt = 0
 
     def __init__(
@@ -569,6 +744,15 @@ class FullyAssociativeCache(Cache):
         *args,
         **kwargs: Any,
     ) -> None:
+        """
+        Initialize the Fully Associative Cache with given parameters.
+
+        :param name: Name of the cache instance, defaults to None
+        :type name: str, optional
+        :param replacement_policy: Replacement policy for the cache, defaults to ReplacementPolicy.RANDOM
+        :type replacement_policy: ReplacementPolicy, optional
+        :raises CacheIllegalParameter: If replacement policy is invalid
+        """
         super().__init__(*args, **kwargs)
         if name is None:  # Default name handling
             name = f"fully_associative_cache_{FullyAssociativeCache._inst_cnt}"
@@ -619,6 +803,7 @@ class FullyAssociativeCache(Cache):
         )
 
     def clear(self):
+        """Clear the Fully Associative Cache."""
         super().clear()
         self.tags = np.full((self.n_lines, 1), -1, dtype=self.dtype)
         self.valid = np.zeros(self.n_lines, dtype=bool)
@@ -634,10 +819,26 @@ class FullyAssociativeCache(Cache):
             self.plru_tree = np.zeros((self.n_lines - 1), dtype=bool)
 
     def find_matching_valid_entry(self, addr):
+        """
+        Find a matching valid entry for the given address.
+
+        :param addr: Address to find
+        :type addr: int
+        :return: Indices of matching valid entries
+        :rtype: np.ndarray
+        """
         matching_indices = np.where((self.valid) & (self.tags.flatten() == addr))[0]
         return matching_indices
 
     def get_replacement(self, index: int = 0):
+        """
+        Get the replacement index based on the replacement policy.
+
+        :param index: Index of the cache line
+        :type index: int
+        :return: Replacement index
+        :rtype: int
+        """
         self.log.debug(f" [GET REPLACEMENT] Line = {index} / Policy = {self._rp.name}")
 
         if self._rp == ReplacementPolicy.RANDOM:
@@ -656,6 +857,14 @@ class FullyAssociativeCache(Cache):
             return node - (self.n_lines - 1)  # Convert tree node to cache way index
 
     def track_access(self, index: int = 0, access_type: AccessType = AccessType.HIT):
+        """
+        Track access for the given index.
+
+        :param index: Index of the cache line
+        :type index: int
+        :param access_type: Type of access (HIT or MISS)
+        :type access_type: AccessType
+        """
         self.log.debug(f" [TRACK ACCESS] Line = {index} / Policy = {self._rp.name}")
 
         if self._rp == ReplacementPolicy.RANDOM:
@@ -699,6 +908,12 @@ class FullyAssociativeCache(Cache):
             self.log.debug(f" [PLRU] Tree @ index {index} --> {self.plru_tree}")
 
     def read(self, addr: int):
+        """
+        Read from the Fully Associative Cache.
+
+        :param addr: Address to read from
+        :type addr: int
+        """
         self.check_addr(addr)
         tag_addr = addr >> self.cl_bits
 
@@ -729,6 +944,12 @@ class FullyAssociativeCache(Cache):
             )
 
     def write(self, addr: int):
+        """
+        Write to the Fully Associative Cache.
+
+        :param addr: Address to write to
+        :type addr: int
+        """
         self.check_addr(addr)
         tag_addr = addr >> self.cl_bits
 

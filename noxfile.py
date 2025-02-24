@@ -44,7 +44,11 @@ def lint(session):
 
 @nox.session(reuse_venv=True)
 def docs(session):
-    """Build the Sphinx documentation."""
+    """Build the Sphinx documentation for cache_performance_model."""
     session.install("sphinx", "sphinx_rtd_theme", "sphinx-autodoc-typehints")
-    session.run("sphinx-apidoc", "-o", "docs/source", "my_project")
+    # Remove old API documentation before regenerating
+    session.run("rm", "-rf", "docs/source/cache_performance_model", external=True)
+    # Generate API docs only for cache_performance_model
+    session.run("sphinx-apidoc", "-o", "docs/source", "cache_performance_model")
+    # Build the documentation
     session.run("sphinx-build", "-b", "html", "docs", "docs/_build/html")
