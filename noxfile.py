@@ -4,7 +4,7 @@
 # License           : MIT license <Check LICENSE>
 # Author            : Anderson I. da Silva (aignacio) <anderson@aignacio.com>
 # Date              : 08.02.2025
-# Last Modified Date: 24.02.2025
+# Last Modified Date: 25.02.2025
 import nox
 
 
@@ -44,11 +44,8 @@ def lint(session):
 
 @nox.session(reuse_venv=True)
 def docs(session):
-    """Build the Sphinx documentation for cache_performance_model."""
-    session.install("sphinx", "sphinx_rtd_theme", "sphinx-autodoc-typehints")
-    # Remove old API documentation before regenerating
-    session.run("rm", "-rf", "docs/source/cache_performance_model", external=True)
-    # Generate API docs only for cache_performance_model
-    session.run("sphinx-apidoc", "-o", "docs/source", "cache_performance_model")
-    # Build the documentation
+    session.install("sphinx", "sphinx_rtd_theme", "ghp-import")
+    session.install("numpy")
+    session.install("-e", ".")
+    session.run("rm", "-rf", "docs/_build", external=True)
     session.run("sphinx-build", "-b", "html", "docs", "docs/_build/html")
