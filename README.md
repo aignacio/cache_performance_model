@@ -4,6 +4,10 @@
 
 This project provides a model for simulating cache performance, including different cache configurations and replacement policies.
 
+```bash
+pip install cache-performance-model
+```
+
 ## Classes
 
 ### Cache
