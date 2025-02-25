@@ -44,8 +44,8 @@ def lint(session):
 
 @nox.session(reuse_venv=True)
 def docs(session):
-    session.install("sphinx", "sphinx_rtd_theme", "ghp-import")
-    session.install("numpy")
-    session.install("-e", ".")
+    session.install("sphinx", "sphinx_rtd_theme", "ghp-import",
+                    "sphinx_copybutton", "myst_parser", "numpy", "furo")
     session.run("rm", "-rf", "docs/_build", external=True)
+    session.run("sphinx-apidoc", "-o", "docs", "cache_performance_model")
     session.run("sphinx-build", "-b", "html", "docs", "docs/_build/html")
