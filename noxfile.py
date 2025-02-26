@@ -4,7 +4,7 @@
 # License           : MIT license <Check LICENSE>
 # Author            : Anderson I. da Silva (aignacio) <anderson@aignacio.com>
 # Date              : 08.02.2025
-# Last Modified Date: 25.02.2025
+# Last Modified Date: 26.02.2025
 import nox
 
 
@@ -44,6 +44,7 @@ def lint(session):
 
 @nox.session(reuse_venv=True)
 def docs(session):
+    session.install("-e", ".")
     session.install("sphinx", "sphinx_rtd_theme", "ghp-import",
                     "sphinx_copybutton", "myst_parser", "furo")
     session.run("rm", "-rf", "docs/_build", external=True)
