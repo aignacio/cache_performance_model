@@ -59,7 +59,7 @@ jobs:
         run: nox -s run -- --verbose --splits 10 --group ${{ matrix.group }} --splitting-algorithm least_duration
 
       - name: Upload partial coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-${{ matrix.group }}
           path: coverage-${{ matrix.group }}.xml
