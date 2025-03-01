@@ -48,6 +48,11 @@ jobs:
           --splitting-algorithm least_duration
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          flags: unittests
+          name: group-${{ matrix.group }}
+          fail_ci_if_error: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
