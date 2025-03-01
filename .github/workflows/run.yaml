@@ -44,8 +44,8 @@ jobs:
         run: pip install --upgrade nox
       - name: Run nox tests (Group ${{ matrix.group }})
         run: |
-          nox -s run -- --verbose --splits 10 --group ${{ matrix.group }} \
-          --splitting-algorithm least_duration \
+          nox -s run -- --splits 10 --group ${{ matrix.group }} \
+          --splitting-algorithm least_duration
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
         env:
