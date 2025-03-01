@@ -33,6 +33,7 @@ jobs:
         run: nox -s "lint-${{ matrix.python-version }}"
 
   tests:
+    name: Run tests (Group ${{ matrix.group }})
     runs-on: ubuntu-22.04
     needs: lint
     if: |
@@ -56,6 +57,15 @@ jobs:
 
       - name: Run nox tests (Group ${{ matrix.group }})
         run: nox -s run -- --verbose --splits 10 --group ${{ matrix.group }} --splitting-algorithm least_duration
+
+  upload-coverage:
+    name: Upload coverage reports to Codecov
+    runs-on: ubuntu-latest
+    needs: tests  # Wait for tests to finish
+    if: success()  # Only run if tests are successful
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
