@@ -22,7 +22,7 @@ def sequential_access_pattern(cache, num_accesses):
 @pytest.mark.parametrize("cache_config", [DirectMappedCache(cache_line_bytes=64)])
 @pytest.mark.parametrize("pattern_func", [sequential_access_pattern])
 @pytest.mark.parametrize("addr_width", [8, 16, 32, 64])
-def test_cache_behavior(cache_config, pattern_func, addr_width):
+def test_other_widths(cache_config, pattern_func, addr_width):
     cache_config.ADDR_WIDTH = addr_width
     num_accesses = 100
     seed = 42
