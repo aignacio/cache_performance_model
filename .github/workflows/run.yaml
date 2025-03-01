@@ -56,9 +56,10 @@ jobs:
         run: pip install --upgrade nox
 
       - name: Run nox tests (Group ${{ matrix.group }})
-        run: nox -s run -- --verbose --splits 10 --group ${{ matrix.group }} \
-              --splitting-algorithm least_duration \
-              --cov=./ --cov-report=xml:coverage-${{ matrix.group }}.xml
+        run: |
+          nox -s run -- --verbose --splits 10 --group ${{ matrix.group }} \
+          --splitting-algorithm least_duration \
+          --cov=./ --cov-report=xml:coverage-${{ matrix.group }}.xml
 
       - name: Upload partial coverage report
         uses: actions/upload-artifact@v4

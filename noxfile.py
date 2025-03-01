@@ -27,6 +27,8 @@ def run(session):
         "--cov=cache_performance_model",
         "--cov-branch",
         "--cov-report=xml",
+        "--splitting-algorithm",
+        "least_duration",
         # "--cov-report=html",
         "-rf",
         # "-rP",
