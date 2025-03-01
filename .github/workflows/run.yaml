@@ -68,15 +68,16 @@ jobs:
         pip install coverage codecov
     - name: Download all coverage reports
       uses: actions/download-artifact@v4
-      with:
-        path: coverage-artifacts
+    - name: List downloaded files
+      run: |
+        find . -name ".coverage.*" -type f
     - name: Combine coverage reports
       run: |
-        python -m coverage combine coverage-artifacts/*/*
+        python -m coverage combine $(find . -name ".coverage.*" -type f)
         python -m coverage xml -o coverage.xml
         python -m coverage report
     - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         file: ./coverage.xml
         token: ${{ secrets.CODECOV_TOKEN }}
