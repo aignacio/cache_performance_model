@@ -58,14 +58,33 @@ jobs:
       - name: Run nox tests (Group ${{ matrix.group }})
         run: nox -s run -- --verbose --splits 10 --group ${{ matrix.group }} --splitting-algorithm least_duration
 
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports-group-${{ matrix.group }}
+          path: coverage.xml  # Adjust path if coverage files are stored elsewhere
+          retention-days: 1
+
   upload-coverage:
     name: Upload coverage reports to Codecov
     runs-on: ubuntu-latest
-    needs: tests  # Wait for tests to finish
-    if: success()  # Only run if tests are successful
+    needs: tests
+    if: success()
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+
+      - name: Download all coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: coverage-reports
+
+      - name: Merge coverage reports (if needed)
+        run: |
+          ls -l coverage-reports
+          # If you are using pytest-cov or coverage.py, you can merge coverage files like this:
+          coverage combine coverage-reports/**/coverage.xml
+          coverage xml -o coverage.xml
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
