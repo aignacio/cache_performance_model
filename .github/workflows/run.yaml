@@ -22,6 +22,7 @@ jobs:
         run: pip install --upgrade nox
       - name: Run nox tests
         run: nox -s lint
+
   tests:
     name: Run tests (Group ${{ matrix.group }})
     runs-on: ubuntu-22.04
@@ -42,45 +43,14 @@ jobs:
       - name: Install nox
         run: pip install --upgrade nox
       - name: Run nox tests (Group ${{ matrix.group }})
-        env:
-          COVERAGE_FILE: .coverage.${{ matrix.group }}
         run: |
           nox -s run -- --verbose --splits 10 --group ${{ matrix.group }} \
           --splitting-algorithm least_duration \
-          --cov=./ --cov-report=
-      - name: Upload partial coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-${{ matrix.group }}
-          path: .coverage.${{ matrix.group }}
-  coverage:
-    needs: tests
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install coverage codecov
-    - name: Download all coverage reports
-      uses: actions/download-artifact@v4
-    - name: List downloaded files
-      run: |
-        find . -name ".coverage.*" -type f
-    - name: Combine coverage reports
-      run: |
-        python -m coverage combine $(find . -name ".coverage.*" -type f)
-        python -m coverage xml -o coverage.xml
-        python -m coverage report
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        file: ./coverage.xml
-        token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
   check-version-change:
     runs-on: ubuntu-latest
     needs: tests
@@ -100,6 +70,7 @@ jobs:
           else
             echo "version_changed=false" >> "$GITHUB_OUTPUT"
           fi
+
   build-n-publish:
     name: Build and publish Python 🐍 distributions 📦 to PyPI
     runs-on: ubuntu-latest
