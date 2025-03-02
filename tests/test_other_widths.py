@@ -19,7 +19,7 @@ def sequential_access_pattern(cache, num_accesses):
             cache.write(address)
 
 
-@pytest.mark.parametrize("addr_width", [2**i for i in range(3,7)])
+@pytest.mark.parametrize("addr_width", [2**i for i in range(3, 7)])
 def test_other_widths(addr_width):
     num_accesses = 100
     seed = 42
