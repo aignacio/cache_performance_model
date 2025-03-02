@@ -4,11 +4,11 @@
 # License           : MIT license <Check LICENSE>
 # Author            : Anderson I. da Silva (aignacio) <anderson@aignacio.com>
 # Date              : 08.02.2025
-# Last Modified Date: 01.03.2025
+# Last Modified Date: 02.03.2025
 import nox
 
 
-@nox.session(python=["3.12"], reuse_venv=True)
+@nox.session(reuse_venv=True)
 def run(session):
     session.env["AUTHOR"] = "Anderson Ignacio da Silva"
     session.install(
@@ -22,15 +22,15 @@ def run(session):
     session.install("-e", ".")
     session.run(
         "py.test",
-        "--log-cli-level=DEBUG",
-        # "--log-cli-level=INFO",
+        # "--log-cli-level=DEBUG",
+        "--log-cli-level=INFO",
         "--cov=cache_performance_model",
         "--cov-branch",
-        # "--cov-append",
-        # "--cov-report=xml",
+        "--cov-append",
+        "--cov-report=xml", # Fmt required by codecov
         # "--cov-report=html",
-        # "--splitting-algorithm",
-        # "least_duration",
+        "--splitting-algorithm",
+        "least_duration",
         # "-rf",
         "-rP",
         "-n",
@@ -39,7 +39,7 @@ def run(session):
     )
 
 
-@nox.session(python=["3.12"], reuse_venv=True)
+@nox.session(reuse_venv=True)
 def lint(session):
     session.install("flake8")
     session.run("flake8")
