@@ -4,7 +4,7 @@
 # License           : MIT license <Check LICENSE>
 # Author            : Anderson I. da Silva (aignacio) <anderson@aignacio.com>
 # Date              : 08.02.2025
-# Last Modified Date: 02.03.2025
+# Last Modified Date: 08.03.2025
 import nox
 
 

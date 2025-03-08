@@ -4,7 +4,7 @@
 # License           : MIT license <Check LICENSE>
 # Author            : Anderson I. da Silva (aignacio) <anderson@aignacio.com>
 # Date              : 07.02.2025
-# Last Modified Date: 24.02.2025
+# Last Modified Date: 08.03.2025
 import logging
 import math
 import numpy as np
@@ -261,6 +261,7 @@ class Cache(ABC):
         """
         print(f"----------- {self.name} -----------")
         print(f" -> Name:\t{self.name}")
+        print(f" -> A.Width:\t{self.ADDR_WIDTH} bits")
         print(f" -> Topology:\t{self.topology}")
         print(f" -> Replacement Policy:\t{self._rp.name}")
         print(f" -> N-Way:\t{self._n_way}")
