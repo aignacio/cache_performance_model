@@ -94,9 +94,12 @@ To build the documentation, run:
 nox -s docs
 ```
 
-## Python trace
+The HTML pages will be in `docs/_build/html`.
+
+## How to obtain traces for benchmark rune
 
 ```bash
-python3 run_tracer.py --docker-image valgrind_trace_temp --binary test
+gcc -o test utils/test.c
+valgrind --tool=lackey --trace-mem=yes --log-file=results.txt ./test
+python3 utils/run_tracer.py
 ```
-The HTML pages will be in `docs/_build/html`.

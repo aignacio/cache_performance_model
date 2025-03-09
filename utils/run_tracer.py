@@ -4,34 +4,6 @@ import argparse
 import os
 
 
-def run_valgrind_trace(docker_image, binary):
-    """Runs the valgrind trace command inside a Docker container and retrieves the output."""
-    command = [
-        "docker",
-        "run",
-        "-it",
-        "--rm",
-        "-v",
-        f"{os.getcwd()}:/temp",
-        "--privileged",
-        "--cap-add",
-        "SYS_ADMIN",
-        "--security-opt",
-        "seccomp=unconfined",
-        "-w",
-        "/temp",
-        docker_image,
-        "valgrind",
-        "--tool=lackey",
-        "--trace-mem=yes",
-        "--log-file=results.txt",
-        f"./{binary}",
-    ]
-
-    print("Running:", " ".join(command))
-    subprocess.run(command, check=True)
-
-
 def parse_trace_file(input_file, instruction_file, memory_file):
     with open(input_file, "r") as infile, open(
         instruction_file, "w"
@@ -60,19 +32,26 @@ if __name__ == "__main__":
         description="Run Valgrind trace in Docker and parse the output."
     )
     parser.add_argument(
-        "--docker-image",
+        "--results",
         type=str,
-        required=True,
-        help="Docker image to use for running Valgrind",
+        required=False,
+        default='results.txt',
+        help="Valgrind log",
     )
     parser.add_argument(
-        "--binary",
+        "--instruction",
         type=str,
-        required=True,
-        help="Binary file to execute inside Valgrind",
+        required=False,
+        default='instruction_trace.txt',
+        help="Instruction trace",
+    )
+    parser.add_argument(
+        "--memory",
+        type=str,
+        required=False,
+        default='memory_trace.txt',
+        help="Memory trace",
     )
 
     args = parser.parse_args()
-
-    run_valgrind_trace(args.docker_image, args.binary)
-    parse_trace_file("results.txt", "instruction_trace.txt", "memory_trace.txt")
+    parse_trace_file(args.results, args.instruction, args.memory)
