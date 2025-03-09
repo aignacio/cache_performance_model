@@ -1,0 +1,650 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cache_performance_model package &mdash; Cache Performance Model 0.1.7 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=ca7ad2ea"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="cache_performance_model" href="modules.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Cache Performance Model
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">cache_performance_model</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">cache_performance_model package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-cache_performance_model.cache_model">cache_performance_model.cache_model module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cache_performance_model.cache_model.Cache"><code class="docutils literal notranslate"><span class="pre">Cache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cache_performance_model.cache_model.DirectMappedCache"><code class="docutils literal notranslate"><span class="pre">DirectMappedCache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cache_performance_model.cache_model.FullyAssociativeCache"><code class="docutils literal notranslate"><span class="pre">FullyAssociativeCache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cache_performance_model.cache_model.SetAssociativeCache"><code class="docutils literal notranslate"><span class="pre">SetAssociativeCache</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-cache_performance_model.types">cache_performance_model.types module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cache_performance_model.types.AccessType"><code class="docutils literal notranslate"><span class="pre">AccessType</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cache_performance_model.types.CacheIllegalParameter"><code class="docutils literal notranslate"><span class="pre">CacheIllegalParameter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cache_performance_model.types.CacheUnexpectedCaller"><code class="docutils literal notranslate"><span class="pre">CacheUnexpectedCaller</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cache_performance_model.types.Miss"><code class="docutils literal notranslate"><span class="pre">Miss</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cache_performance_model.types.ReplacementPolicy"><code class="docutils literal notranslate"><span class="pre">ReplacementPolicy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cache_performance_model.types.Total"><code class="docutils literal notranslate"><span class="pre">Total</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-cache_performance_model.version">cache_performance_model.version module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-cache_performance_model">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Cache Performance Model</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">cache_performance_model</a></li>
+      <li class="breadcrumb-item active">cache_performance_model package</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/aignacio/cache_performance_model/blob/master/docs/cache_performance_model.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="cache-performance-model-package">
+<h1>cache_performance_model package<a class="headerlink" href="#cache-performance-model-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-cache_performance_model.cache_model">
+<span id="cache-performance-model-cache-model-module"></span><h2>cache_performance_model.cache_model module<a class="headerlink" href="#module-cache_performance_model.cache_model" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.Cache">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cache_performance_model.cache_model.</span></span><span class="sig-name descname"><span class="pre">Cache</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cache_line_bytes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_size_kib</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hit_latency</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">miss_latency</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#Cache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.Cache" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Abstract base class for cache models.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.Cache.ADDR_WIDTH">
+<span class="sig-name descname"><span class="pre">ADDR_WIDTH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">32</span></em><a class="headerlink" href="#cache_performance_model.cache_model.Cache.ADDR_WIDTH" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.Cache.amat">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">amat</span></span><a class="headerlink" href="#cache_performance_model.cache_model.Cache.amat" title="Link to this definition"></a></dt>
+<dd><p>Return the AMAT - Average Memory Access Time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>AMAT in clock cycles</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.Cache.check_addr">
+<span class="sig-name descname"><span class="pre">check_addr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">address</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#Cache.check_addr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.Cache.check_addr" title="Link to this definition"></a></dt>
+<dd><p>Check if the address is within the valid range.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>address</strong> (<em>int</em>) – Address to check</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the address is out of range</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.Cache.clear">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#Cache.clear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.Cache.clear" title="Link to this definition"></a></dt>
+<dd><p>Clear the cache.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.Cache.clog2">
+<span class="sig-name descname"><span class="pre">clog2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#Cache.clog2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.Cache.clog2" title="Link to this definition"></a></dt>
+<dd><p>Calculate the ceiling of log2.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>n</strong> (<em>int</em>) – Number to calculate log2 for</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Ceiling of log2 of n</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.Cache.create_mask">
+<span class="sig-name descname"><span class="pre">create_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#Cache.create_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.Cache.create_mask" title="Link to this definition"></a></dt>
+<dd><p>Create a bitmask of length x.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>int</em>) – Length of the bitmask</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Bitmask of length x</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.Cache.hit_ratio">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">hit_ratio</span></span><a class="headerlink" href="#cache_performance_model.cache_model.Cache.hit_ratio" title="Link to this definition"></a></dt>
+<dd><p>Get the hit ratio.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Hit ratio</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.Cache.hits">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">hits</span></span><a class="headerlink" href="#cache_performance_model.cache_model.Cache.hits" title="Link to this definition"></a></dt>
+<dd><p>Get the number of hits.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of hits</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.Cache.miss_ratio">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">miss_ratio</span></span><a class="headerlink" href="#cache_performance_model.cache_model.Cache.miss_ratio" title="Link to this definition"></a></dt>
+<dd><p>Get the miss ratio.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Miss ratio</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.Cache.misses">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">misses</span></span><a class="headerlink" href="#cache_performance_model.cache_model.Cache.misses" title="Link to this definition"></a></dt>
+<dd><p>Get the total number of misses.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Total number of misses</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.Cache.name">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#cache_performance_model.cache_model.Cache.name" title="Link to this definition"></a></dt>
+<dd><p>Get the name of the cache.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Name of the cache</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.Cache.read">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">addr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#Cache.read"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.Cache.read" title="Link to this definition"></a></dt>
+<dd><p>Abstract method to read from the cache.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>addr</strong> (<em>int</em>) – Address to read from</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.Cache.stats">
+<span class="sig-name descname"><span class="pre">stats</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#Cache.stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.Cache.stats" title="Link to this definition"></a></dt>
+<dd><p>Print cache statistics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>AMAT in clock cycles</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.Cache.topology">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">topology</span></span><a class="headerlink" href="#cache_performance_model.cache_model.Cache.topology" title="Link to this definition"></a></dt>
+<dd><p>Get the topology of the cache.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Topology of the cache</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.Cache.update_miss">
+<span class="sig-name descname"><span class="pre">update_miss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">miss_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#Cache.update_miss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.Cache.update_miss" title="Link to this definition"></a></dt>
+<dd><p>Update a specific type of miss (conflict, capacity, or compulsory).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>miss_type</strong> (<em>str</em>) – Type of miss (‘conflict’, ‘capacity’, or ‘compulsory’)</p></li>
+<li><p><strong>value</strong> (<em>int</em>) – Value to increment the miss count by</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If the miss type is invalid</p></li>
+<li><p><a class="reference internal" href="#cache_performance_model.types.CacheUnexpectedCaller" title="cache_performance_model.types.CacheUnexpectedCaller"><strong>CacheUnexpectedCaller</strong></a> – If the caller is not read or write method</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.Cache.write">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">addr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#Cache.write"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.Cache.write" title="Link to this definition"></a></dt>
+<dd><p>Abstract method to write to the cache.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>addr</strong> (<em>int</em>) – Address to write to</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.DirectMappedCache">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cache_performance_model.cache_model.</span></span><span class="sig-name descname"><span class="pre">DirectMappedCache</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#DirectMappedCache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.DirectMappedCache" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cache_performance_model.cache_model.Cache" title="cache_performance_model.cache_model.Cache"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cache</span></code></a></p>
+<p>Class for Direct Mapped Cache.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.DirectMappedCache.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#DirectMappedCache.clear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.DirectMappedCache.clear" title="Link to this definition"></a></dt>
+<dd><p>Clear the Direct Mapped Cache.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.DirectMappedCache.read">
+<span class="sig-name descname"><span class="pre">read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">addr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#DirectMappedCache.read"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.DirectMappedCache.read" title="Link to this definition"></a></dt>
+<dd><p>Read from the Direct Mapped Cache.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>addr</strong> (<em>int</em>) – Address to read from</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.DirectMappedCache.write">
+<span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">addr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#DirectMappedCache.write"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.DirectMappedCache.write" title="Link to this definition"></a></dt>
+<dd><p>Write to the Direct Mapped Cache.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>addr</strong> (<em>int</em>) – Address to write to</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.FullyAssociativeCache">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cache_performance_model.cache_model.</span></span><span class="sig-name descname"><span class="pre">FullyAssociativeCache</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replacement_policy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cache_performance_model.types.ReplacementPolicy" title="cache_performance_model.types.ReplacementPolicy"><span class="pre">ReplacementPolicy</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ReplacementPolicy.RANDOM</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#FullyAssociativeCache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.FullyAssociativeCache" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cache_performance_model.cache_model.Cache" title="cache_performance_model.cache_model.Cache"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cache</span></code></a></p>
+<p>Class for Fully Associative Cache.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.FullyAssociativeCache.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#FullyAssociativeCache.clear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.FullyAssociativeCache.clear" title="Link to this definition"></a></dt>
+<dd><p>Clear the Fully Associative Cache.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.FullyAssociativeCache.find_matching_valid_entry">
+<span class="sig-name descname"><span class="pre">find_matching_valid_entry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">addr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#FullyAssociativeCache.find_matching_valid_entry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.FullyAssociativeCache.find_matching_valid_entry" title="Link to this definition"></a></dt>
+<dd><p>Find a matching valid entry for the given address.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>addr</strong> (<em>int</em>) – Address to find</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Indices of matching valid entries</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.FullyAssociativeCache.get_replacement">
+<span class="sig-name descname"><span class="pre">get_replacement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#FullyAssociativeCache.get_replacement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.FullyAssociativeCache.get_replacement" title="Link to this definition"></a></dt>
+<dd><p>Get the replacement index based on the replacement policy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>index</strong> (<em>int</em>) – Index of the cache line</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Replacement index</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.FullyAssociativeCache.read">
+<span class="sig-name descname"><span class="pre">read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">addr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#FullyAssociativeCache.read"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.FullyAssociativeCache.read" title="Link to this definition"></a></dt>
+<dd><p>Read from the Fully Associative Cache.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>addr</strong> (<em>int</em>) – Address to read from</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.FullyAssociativeCache.track_access">
+<span class="sig-name descname"><span class="pre">track_access</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_type:</span> <span class="pre">~cache_performance_model.types.AccessType</span> <span class="pre">=</span> <span class="pre">&lt;AccessType.HIT:</span> <span class="pre">False&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#FullyAssociativeCache.track_access"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.FullyAssociativeCache.track_access" title="Link to this definition"></a></dt>
+<dd><p>Track access for the given index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index</strong> (<em>int</em>) – Index of the cache line</p></li>
+<li><p><strong>access_type</strong> (<a class="reference internal" href="#cache_performance_model.types.AccessType" title="cache_performance_model.types.AccessType"><em>AccessType</em></a>) – Type of access (HIT or MISS)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.FullyAssociativeCache.write">
+<span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">addr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#FullyAssociativeCache.write"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.FullyAssociativeCache.write" title="Link to this definition"></a></dt>
+<dd><p>Write to the Fully Associative Cache.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>addr</strong> (<em>int</em>) – Address to write to</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.SetAssociativeCache">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cache_performance_model.cache_model.</span></span><span class="sig-name descname"><span class="pre">SetAssociativeCache</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_way</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replacement_policy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cache_performance_model.types.ReplacementPolicy" title="cache_performance_model.types.ReplacementPolicy"><span class="pre">ReplacementPolicy</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ReplacementPolicy.RANDOM</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#SetAssociativeCache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.SetAssociativeCache" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cache_performance_model.cache_model.Cache" title="cache_performance_model.cache_model.Cache"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cache</span></code></a></p>
+<p>Class for Set Associative Cache.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.SetAssociativeCache.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#SetAssociativeCache.clear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.SetAssociativeCache.clear" title="Link to this definition"></a></dt>
+<dd><p>Clear the Set Associative Cache.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.SetAssociativeCache.get_replacement">
+<span class="sig-name descname"><span class="pre">get_replacement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#SetAssociativeCache.get_replacement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.SetAssociativeCache.get_replacement" title="Link to this definition"></a></dt>
+<dd><p>Get the replacement index based on the replacement policy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>index</strong> (<em>int</em>) – Index of the cache line</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Replacement index</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.SetAssociativeCache.read">
+<span class="sig-name descname"><span class="pre">read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">addr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#SetAssociativeCache.read"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.SetAssociativeCache.read" title="Link to this definition"></a></dt>
+<dd><p>Read from the Set Associative Cache.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>addr</strong> (<em>int</em>) – Address to read from</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.SetAssociativeCache.track_access">
+<span class="sig-name descname"><span class="pre">track_access</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">way:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_type:</span> <span class="pre">~cache_performance_model.types.AccessType</span> <span class="pre">=</span> <span class="pre">&lt;AccessType.HIT:</span> <span class="pre">False&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#SetAssociativeCache.track_access"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.SetAssociativeCache.track_access" title="Link to this definition"></a></dt>
+<dd><p>Track access for the given index and way.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index</strong> (<em>int</em>) – Index of the cache line</p></li>
+<li><p><strong>way</strong> (<em>int</em>) – Way of the cache line</p></li>
+<li><p><strong>access_type</strong> (<a class="reference internal" href="#cache_performance_model.types.AccessType" title="cache_performance_model.types.AccessType"><em>AccessType</em></a>) – Type of access (HIT or MISS)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cache_performance_model.cache_model.SetAssociativeCache.write">
+<span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">addr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/cache_model.html#SetAssociativeCache.write"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.cache_model.SetAssociativeCache.write" title="Link to this definition"></a></dt>
+<dd><p>Write to the Set Associative Cache.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>addr</strong> (<em>int</em>) – Address to write to</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-cache_performance_model.types">
+<span id="cache-performance-model-types-module"></span><h2>cache_performance_model.types module<a class="headerlink" href="#module-cache_performance_model.types" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cache_performance_model.types.AccessType">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cache_performance_model.types.</span></span><span class="sig-name descname"><span class="pre">AccessType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/types.html#AccessType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.types.AccessType" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Flag</span></code></p>
+<p>Enumeration for cache access types.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cache_performance_model.types.AccessType.HIT">
+<span class="sig-name descname"><span class="pre">HIT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#cache_performance_model.types.AccessType.HIT" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cache_performance_model.types.AccessType.MISS">
+<span class="sig-name descname"><span class="pre">MISS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#cache_performance_model.types.AccessType.MISS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="cache_performance_model.types.CacheIllegalParameter">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cache_performance_model.types.</span></span><span class="sig-name descname"><span class="pre">CacheIllegalParameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Parameter</span> <span class="pre">{param}</span> <span class="pre">value</span> <span class="pre">is</span> <span class="pre">illegal'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/types.html#CacheIllegalParameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.types.CacheIllegalParameter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Exception raised when an illegal parameter is set.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="cache_performance_model.types.CacheUnexpectedCaller">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cache_performance_model.types.</span></span><span class="sig-name descname"><span class="pre">CacheUnexpectedCaller</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Hit/Miss</span> <span class="pre">needs</span> <span class="pre">to</span> <span class="pre">be</span> <span class="pre">called</span> <span class="pre">from</span> <span class="pre">read</span> <span class="pre">or</span> <span class="pre">write</span> <span class="pre">methods'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/types.html#CacheUnexpectedCaller"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.types.CacheUnexpectedCaller" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Exception raised when hit/miss is not coming from read/write methods.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cache_performance_model.types.Miss">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cache_performance_model.types.</span></span><span class="sig-name descname"><span class="pre">Miss</span></span><a class="reference internal" href="_modules/cache_performance_model/types.html#Miss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.types.Miss" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class to keep track of different types of cache misses.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="cache_performance_model.types.Miss.sum">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sum</span></span><a class="headerlink" href="#cache_performance_model.types.Miss.sum" title="Link to this definition"></a></dt>
+<dd><p>Return the sum of all types of cache misses.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cache_performance_model.types.ReplacementPolicy">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cache_performance_model.types.</span></span><span class="sig-name descname"><span class="pre">ReplacementPolicy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cache_performance_model/types.html#ReplacementPolicy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.types.ReplacementPolicy" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">IntEnum</span></code></p>
+<p>Enumeration for cache replacement policies.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cache_performance_model.types.ReplacementPolicy.FIFO">
+<span class="sig-name descname"><span class="pre">FIFO</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#cache_performance_model.types.ReplacementPolicy.FIFO" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cache_performance_model.types.ReplacementPolicy.LRU">
+<span class="sig-name descname"><span class="pre">LRU</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em><a class="headerlink" href="#cache_performance_model.types.ReplacementPolicy.LRU" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cache_performance_model.types.ReplacementPolicy.NMRU">
+<span class="sig-name descname"><span class="pre">NMRU</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em><a class="headerlink" href="#cache_performance_model.types.ReplacementPolicy.NMRU" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cache_performance_model.types.ReplacementPolicy.NONE">
+<span class="sig-name descname"><span class="pre">NONE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#cache_performance_model.types.ReplacementPolicy.NONE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cache_performance_model.types.ReplacementPolicy.PLRU">
+<span class="sig-name descname"><span class="pre">PLRU</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></em><a class="headerlink" href="#cache_performance_model.types.ReplacementPolicy.PLRU" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cache_performance_model.types.ReplacementPolicy.RANDOM">
+<span class="sig-name descname"><span class="pre">RANDOM</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#cache_performance_model.types.ReplacementPolicy.RANDOM" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cache_performance_model.types.Total">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cache_performance_model.types.</span></span><span class="sig-name descname"><span class="pre">Total</span></span><a class="reference internal" href="_modules/cache_performance_model/types.html#Total"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cache_performance_model.types.Total" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class to keep track of total read and write operations.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="cache_performance_model.types.Total.sum">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sum</span></span><a class="headerlink" href="#cache_performance_model.types.Total.sum" title="Link to this definition"></a></dt>
+<dd><p>Return the sum of read and write operations.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-cache_performance_model.version">
+<span id="cache-performance-model-version-module"></span><h2>cache_performance_model.version module<a class="headerlink" href="#module-cache_performance_model.version" title="Link to this heading"></a></h2>
+</section>
+<section id="module-cache_performance_model">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-cache_performance_model" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="modules.html" class="btn btn-neutral float-left" title="cache_performance_model" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Anderson Ignacio da Silva.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

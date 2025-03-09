@@ -1,0 +1,1169 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cache_performance_model.cache_model &mdash; Cache Performance Model 0.1.7 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=ca7ad2ea"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Cache Performance Model
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">cache_performance_model</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Cache Performance Model</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">cache_performance_model.cache_model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for cache_performance_model.cache_model</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1"># File              : cache_model.py</span>
+<span class="c1"># License           : MIT license &lt;Check LICENSE&gt;</span>
+<span class="c1"># Author            : Anderson I. da Silva (aignacio) &lt;anderson@aignacio.com&gt;</span>
+<span class="c1"># Date              : 07.02.2025</span>
+<span class="c1"># Last Modified Date: 08.03.2025</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">AccessType</span><span class="p">,</span> <span class="n">ReplacementPolicy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Total</span><span class="p">,</span> <span class="n">Miss</span><span class="p">,</span> <span class="n">CacheUnexpectedCaller</span><span class="p">,</span> <span class="n">CacheIllegalParameter</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+    <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> [</span><span class="si">%(levelname)s</span><span class="s2">] </span><span class="si">%(message)s</span><span class="s2">&quot;</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="Cache">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.Cache">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Cache</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for cache models.&quot;&quot;&quot;</span>
+    <span class="n">ADDR_WIDTH</span> <span class="o">=</span> <span class="mi">32</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cache_line_bytes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
+        <span class="n">cache_size_kib</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">hit_latency</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">miss_latency</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the cache with given parameters.</span>
+
+<span class="sd">        :param cache_line_bytes: Size of each cache line in bytes, defaults to 64</span>
+<span class="sd">        :type cache_line_bytes: int, optional</span>
+<span class="sd">        :param cache_size_kib: Size of the cache in KiB, defaults to 4</span>
+<span class="sd">        :type cache_size_kib: int, optional</span>
+<span class="sd">        :param hit_latency: Latency for a cache hit, defaults to 1</span>
+<span class="sd">        :type hit_latency: int, optional</span>
+<span class="sd">        :param miss_latency: Latency for a cache miss, defaults to 10</span>
+<span class="sd">        :type miss_latency: int, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache_line_bytes</span> <span class="o">=</span> <span class="n">cache_line_bytes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache_size_kib</span> <span class="o">=</span> <span class="n">cache_size_kib</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cl_bits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clog2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_line_bytes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hit_latency</span> <span class="o">=</span> <span class="n">hit_latency</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">miss_latency</span> <span class="o">=</span> <span class="n">miss_latency</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_topology</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">=</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">NONE</span>
+
+        <span class="c1"># counters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hits</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_misses</span> <span class="o">=</span> <span class="n">Miss</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_total</span> <span class="o">=</span> <span class="n">Total</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ADDR_WIDTH</span> <span class="o">&lt;=</span> <span class="mi">8</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">int8</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">ADDR_WIDTH</span> <span class="o">&lt;=</span> <span class="mi">16</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">int16</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">ADDR_WIDTH</span> <span class="o">&lt;=</span> <span class="mi">32</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">ADDR_WIDTH</span> <span class="o">&lt;=</span> <span class="mi">64</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;NumPy does not support integers larger than 64 bits.&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Cache.read">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.Cache.read">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Abstract method to read from the cache.</span>
+
+<span class="sd">        :param addr: Address to read from</span>
+<span class="sd">        :type addr: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="Cache.write">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.Cache.write">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Abstract method to write to the cache.</span>
+
+<span class="sd">        :param addr: Address to write to</span>
+<span class="sd">        :type addr: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="Cache.clear">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.Cache.clear">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear the cache.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hits</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_misses</span> <span class="o">=</span> <span class="n">Miss</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_total</span><span class="o">.</span><span class="n">sum</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Cache.clog2">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.Cache.clog2">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clog2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the ceiling of log2.</span>
+
+<span class="sd">        :param n: Number to calculate log2 for</span>
+<span class="sd">        :type n: int</span>
+<span class="sd">        :return: Ceiling of log2 of n</span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="Cache.create_mask">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.Cache.create_mask">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a bitmask of length x.</span>
+
+<span class="sd">        :param x: Length of the bitmask</span>
+<span class="sd">        :type x: int</span>
+<span class="sd">        :return: Bitmask of length x</span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="Cache.check_addr">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.Cache.check_addr">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_addr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if the address is within the valid range.</span>
+
+<span class="sd">        :param address: Address to check</span>
+<span class="sd">        :type address: int</span>
+<span class="sd">        :raises ValueError: If the address is out of range</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">address</span> <span class="o">&gt;</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">Cache</span><span class="o">.</span><span class="n">ADDR_WIDTH</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Address value is greater than max (</span><span class="si">{</span><span class="n">Cache</span><span class="o">.</span><span class="n">ADDR_WIDTH</span><span class="si">}</span><span class="s2"> bits).&quot;</span>
+            <span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">hits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the number of hits.</span>
+
+<span class="sd">        :return: Number of hits</span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hits</span>
+
+    <span class="nd">@hits</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">hits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the number of hits and update the total read/write counters.</span>
+
+<span class="sd">        :param value: Number of hits</span>
+<span class="sd">        :type value: int</span>
+<span class="sd">        :raises CacheUnexpectedCaller: If the caller is not read or write method</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hits</span> <span class="o">=</span> <span class="n">value</span>
+
+        <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">stack</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">function</span> <span class="o">==</span> <span class="s2">&quot;read&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_total</span><span class="o">.</span><span class="n">read</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">inspect</span><span class="o">.</span><span class="n">stack</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">function</span> <span class="o">==</span> <span class="s2">&quot;write&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_total</span><span class="o">.</span><span class="n">write</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">CacheUnexpectedCaller</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">misses</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the total number of misses.</span>
+
+<span class="sd">        :return: Total number of misses</span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_misses</span><span class="o">.</span><span class="n">sum</span>
+
+<div class="viewcode-block" id="Cache.update_miss">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.Cache.update_miss">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_miss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">miss_type</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update a specific type of miss (conflict, capacity, or compulsory).</span>
+
+<span class="sd">        :param miss_type: Type of miss (&#39;conflict&#39;, &#39;capacity&#39;, or &#39;compulsory&#39;)</span>
+<span class="sd">        :type miss_type: str</span>
+<span class="sd">        :param value: Value to increment the miss count by</span>
+<span class="sd">        :type value: int</span>
+<span class="sd">        :raises ValueError: If the miss type is invalid</span>
+<span class="sd">        :raises CacheUnexpectedCaller: If the caller is not read or write method</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">miss_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;conflict&quot;</span><span class="p">,</span> <span class="s2">&quot;capacity&quot;</span><span class="p">,</span> <span class="s2">&quot;compulsory&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Invalid miss type. Choose from &#39;conflict&#39;, &#39;capacity&#39;, or &#39;compulsory&#39;.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Increment the specified miss type</span>
+        <span class="k">if</span> <span class="n">miss_type</span> <span class="o">==</span> <span class="s2">&quot;conflict&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_misses</span><span class="o">.</span><span class="n">conflict</span> <span class="o">+=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">miss_type</span> <span class="o">==</span> <span class="s2">&quot;capacity&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_misses</span><span class="o">.</span><span class="n">capacity</span> <span class="o">+=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">miss_type</span> <span class="o">==</span> <span class="s2">&quot;compulsory&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_misses</span><span class="o">.</span><span class="n">compulsory</span> <span class="o">+=</span> <span class="n">value</span>
+
+        <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">stack</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">function</span> <span class="o">==</span> <span class="s2">&quot;read&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_total</span><span class="o">.</span><span class="n">read</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">inspect</span><span class="o">.</span><span class="n">stack</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">function</span> <span class="o">==</span> <span class="s2">&quot;write&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_total</span><span class="o">.</span><span class="n">write</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">CacheUnexpectedCaller</span><span class="p">()</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">hit_ratio</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the hit ratio.</span>
+
+<span class="sd">        :return: Hit ratio</span>
+<span class="sd">        :rtype: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hits</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_total</span><span class="o">.</span><span class="n">sum</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">miss_ratio</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the miss ratio.</span>
+
+<span class="sd">        :return: Miss ratio</span>
+<span class="sd">        :rtype: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_misses</span><span class="o">.</span><span class="n">sum</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_total</span><span class="o">.</span><span class="n">sum</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the name of the cache.</span>
+
+<span class="sd">        :return: Name of the cache</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">topology</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the topology of the cache.</span>
+
+<span class="sd">        :return: Topology of the cache</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_topology</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">amat</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the AMAT - Average Memory Access Time.</span>
+
+<span class="sd">        :return: AMAT in clock cycles</span>
+<span class="sd">        :rtype: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Hit time + Instruction miss rate Miss penalty</span>
+        <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hit_latency</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">miss_ratio</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">miss_latency</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Cache.stats">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.Cache.stats">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">stats</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Print cache statistics.</span>
+
+<span class="sd">        :return: AMAT in clock cycles</span>
+<span class="sd">        :rtype: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;----------- </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> -----------&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -&gt; Name:</span><span class="se">\t</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -&gt; A.Width:</span><span class="se">\t</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ADDR_WIDTH</span><span class="si">}</span><span class="s2"> bits&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -&gt; Topology:</span><span class="se">\t</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">topology</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -&gt; Replacement Policy:</span><span class="se">\t</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_rp</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -&gt; N-Way:</span><span class="se">\t</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -&gt; Cache size:</span><span class="se">\t</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_size_kib</span><span class="si">}</span><span class="s2"> KiB&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -&gt; Cache line:</span><span class="se">\t</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_line_bytes</span><span class="si">}</span><span class="s2"> bytes&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -&gt; Hit lat.:</span><span class="se">\t</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">hit_latency</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -&gt; Miss lat.:</span><span class="se">\t</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">miss_latency</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -&gt; AMAT:</span><span class="se">\t</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">amat</span><span class="si">}</span><span class="s2"> clock cycles&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -&gt; Hit Ratio:</span><span class="se">\t</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">hit_ratio</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">hit_ratio</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -&gt; Miss Ratio:</span><span class="se">\t</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">miss_ratio</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">miss_ratio</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -&gt; Miss info:</span><span class="se">\t</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_misses</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -&gt; Total:</span><span class="se">\t</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_total</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hit_latency</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">miss_ratio</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">miss_latency</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DirectMappedCache">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.DirectMappedCache">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DirectMappedCache</span><span class="p">(</span><span class="n">Cache</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for Direct Mapped Cache.&quot;&quot;&quot;</span>
+    <span class="n">_inst_cnt</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the Direct Mapped Cache with given parameters.</span>
+
+<span class="sd">        :param name: Name of the cache instance, defaults to None</span>
+<span class="sd">        :type name: str, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># Default name handling</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;direct_mapped_cache_</span><span class="si">{</span><span class="n">DirectMappedCache</span><span class="o">.</span><span class="n">_inst_cnt</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">DirectMappedCache</span><span class="o">.</span><span class="n">_inst_cnt</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_topology</span> <span class="o">=</span> <span class="s2">&quot;direct_mapped&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_size_kib</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">)</span> <span class="o">//</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_line_bytes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_lines_bits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clog2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tag_size_bits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ADDR_WIDTH</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines_bits</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_bits</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tag_size_kib</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">tag_size_bits</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">)</span> <span class="o">/</span> <span class="mi">8</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1024</span>
+
+        <span class="c1"># Memories</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tags</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dirty</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;DirectMappedCache&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Created new Direct Mapped cache - Writeback&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Instance name  : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Cache size kib : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_size_kib</span><span class="si">}</span><span class="s2"> KiB&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Tag size kib   : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tag_size_kib</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> KiB&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Cache line size: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_line_bytes</span><span class="si">}</span><span class="s2"> bytes&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Number of lines : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Tag size width : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tag_size_bits</span><span class="si">}</span><span class="s2"> bits&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot; - Ratio tag mem/data size: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">tag_size_kib</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">cache_size_kib</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="DirectMappedCache.clear">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.DirectMappedCache.clear">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear the Direct Mapped Cache.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tags</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>  <span class="c1"># Valid bits</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dirty</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>  <span class="c1"># Dirty bits</span></div>
+
+
+<div class="viewcode-block" id="DirectMappedCache.read">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.DirectMappedCache.read">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read from the Direct Mapped Cache.</span>
+
+<span class="sd">        :param addr: Address to read from</span>
+<span class="sd">        :type addr: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_addr</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="p">(</span><span class="n">addr</span> <span class="o">&gt;&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_bits</span><span class="p">)</span> <span class="o">%</span> <span class="p">((</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines_bits</span><span class="p">))</span>
+        <span class="n">tag_addr</span> <span class="o">=</span> <span class="n">addr</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines_bits</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_bits</span><span class="p">)</span>
+
+        <span class="c1"># self.log.debug(f&quot;--- {addr} / {tag_addr} / {index} / {self.tags[index]}&quot;)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">index</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">==</span> <span class="n">tag_addr</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hits</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot; [READ - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Hit @ Address&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">update_miss</span><span class="p">(</span><span class="s2">&quot;capacity&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot; [READ - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Capacity miss @ Address&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">update_miss</span><span class="p">(</span><span class="s2">&quot;conflict&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot; [READ - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Conflict miss @ Address&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_miss</span><span class="p">(</span><span class="s2">&quot;compulsory&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot; [READ - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Compulsory miss @ Address&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DirectMappedCache.write">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.DirectMappedCache.write">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write to the Direct Mapped Cache.</span>
+
+<span class="sd">        :param addr: Address to write to</span>
+<span class="sd">        :type addr: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_addr</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="p">(</span><span class="n">addr</span> <span class="o">&gt;&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_bits</span><span class="p">)</span> <span class="o">%</span> <span class="p">((</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines_bits</span><span class="p">))</span>
+        <span class="n">tag_addr</span> <span class="o">=</span> <span class="n">addr</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines_bits</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_bits</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">index</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dirty</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">==</span> <span class="n">tag_addr</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hits</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot; [WRITE - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Hit @ Address&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">update_miss</span><span class="p">(</span><span class="s2">&quot;capacity&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot; [WRITE - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Capacity miss @ Address&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">update_miss</span><span class="p">(</span><span class="s2">&quot;conflict&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot; [WRITE - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Conflict miss @ Address&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_miss</span><span class="p">(</span><span class="s2">&quot;compulsory&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot; [WRITE - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Compulsory miss @ Address&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SetAssociativeCache">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.SetAssociativeCache">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SetAssociativeCache</span><span class="p">(</span><span class="n">Cache</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for Set Associative Cache.&quot;&quot;&quot;</span>
+    <span class="n">_inst_cnt</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">n_way</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">replacement_policy</span><span class="p">:</span> <span class="n">ReplacementPolicy</span> <span class="o">=</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">RANDOM</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the Set Associative Cache with given parameters.</span>
+
+<span class="sd">        :param name: Name of the cache instance, defaults to None</span>
+<span class="sd">        :type name: str, optional</span>
+<span class="sd">        :param n_way: Number of ways in the set associative cache, defaults to 2</span>
+<span class="sd">        :type n_way: int, optional</span>
+<span class="sd">        :param replacement_policy: Replacement policy for the cache, defaults to ReplacementPolicy.RANDOM</span>
+<span class="sd">        :type replacement_policy: ReplacementPolicy, optional</span>
+<span class="sd">        :raises CacheIllegalParameter: If n_way is less than 2 or if replacement policy is invalid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># Default name handling</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;set_associative_cache_</span><span class="si">{</span><span class="n">SetAssociativeCache</span><span class="o">.</span><span class="n">_inst_cnt</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">SetAssociativeCache</span><span class="o">.</span><span class="n">_inst_cnt</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_topology</span> <span class="o">=</span> <span class="s2">&quot;set_associative&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span> <span class="o">=</span> <span class="n">n_way</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">=</span> <span class="n">replacement_policy</span>
+
+        <span class="c1"># Basic checks</span>
+        <span class="k">if</span> <span class="n">n_way</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">CacheIllegalParameter</span><span class="p">(</span><span class="s2">&quot;n_way&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">n_way</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">replacement_policy</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">PLRU</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">CacheIllegalParameter</span><span class="p">(</span><span class="s2">&quot;n_way&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">replacement_policy</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">NONE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">CacheIllegalParameter</span><span class="p">(</span><span class="s2">&quot;replacement_policy&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache_size_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache_size_kib</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span>  <span class="c1"># in bytes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache_size_set</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache_line_bytes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_lines_bits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clog2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tag_size_bits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ADDR_WIDTH</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines_bits</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_bits</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tag_size_kib</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">tag_size_bits</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">)</span> <span class="o">/</span> <span class="mi">8</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1024</span>
+
+        <span class="c1"># Memories</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tags</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dirty</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">FIFO</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fifo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">LRU</span><span class="p">:</span>
+            <span class="n">init_row</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lru</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">init_row</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">NMRU</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nmru</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">PLRU</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plru_tree</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;SetAssociativeCache&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Created new Set Associative Cache - Writeback&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Instance name  : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - N-Way  : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Replacement Policy  : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_rp</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Cache size kib : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_size_kib</span><span class="si">}</span><span class="s2"> KiB&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Tag size kib   : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tag_size_kib</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> KiB&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Cache line size: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_line_bytes</span><span class="si">}</span><span class="s2"> bytes&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Number of lines : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Tag size width : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tag_size_bits</span><span class="si">}</span><span class="s2"> bits&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot; - Ratio tag mem/data size: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">tag_size_kib</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">cache_size_kib</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="SetAssociativeCache.get_replacement">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.SetAssociativeCache.get_replacement">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_replacement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the replacement index based on the replacement policy.</span>
+
+<span class="sd">        :param index: Index of the cache line</span>
+<span class="sd">        :type index: int</span>
+<span class="sd">        :return: Replacement index</span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; [GET REPLACEMENT] Line = </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2"> / Policy = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_rp</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">RANDOM</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">FIFO</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fifo</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">LRU</span><span class="p">:</span>
+            <span class="c1"># Return the index of the lowest number within the array</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lru</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">NMRU</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nmru</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">PLRU</span><span class="p">:</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span><span class="o">.</span><span class="n">bit_length</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>  <span class="c1"># log2(n_way) levels</span>
+                <span class="n">direction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plru_tree</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">node</span><span class="p">]</span>
+                <span class="n">node</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">node</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">direction</span>  <span class="c1"># Move left (0) or right (1)</span>
+            <span class="k">return</span> <span class="n">node</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># Convert tree node to cache way index</span></div>
+
+
+<div class="viewcode-block" id="SetAssociativeCache.track_access">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.SetAssociativeCache.track_access">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">track_access</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">way</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">access_type</span><span class="p">:</span> <span class="n">AccessType</span> <span class="o">=</span> <span class="n">AccessType</span><span class="o">.</span><span class="n">HIT</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Track access for the given index and way.</span>
+
+<span class="sd">        :param index: Index of the cache line</span>
+<span class="sd">        :type index: int</span>
+<span class="sd">        :param way: Way of the cache line</span>
+<span class="sd">        :type way: int</span>
+<span class="sd">        :param access_type: Type of access (HIT or MISS)</span>
+<span class="sd">        :type access_type: AccessType</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; [TRACK ACCESS] Line = </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2"> / Policy = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_rp</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">RANDOM</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">FIFO</span><span class="p">:</span>
+            <span class="n">latest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fifo</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; [FIFO] Latest: </span><span class="si">{</span><span class="n">latest</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">access_type</span> <span class="o">==</span> <span class="n">AccessType</span><span class="o">.</span><span class="n">MISS</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fifo</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">latest</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">latest</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; [FIFO] Now oldest: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">fifo</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">LRU</span><span class="p">:</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lru</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+            <span class="n">accessed_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lru</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span>
+            <span class="c1"># If it&#39;s already the highest, do nothing</span>
+            <span class="k">if</span> <span class="n">accessed_value</span> <span class="o">!=</span> <span class="nb">max</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span>
+                <span class="c1"># Decrease values that are greater than the accessed value</span>
+                <span class="n">arr</span><span class="p">[</span><span class="n">arr</span> <span class="o">&gt;</span> <span class="n">accessed_value</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="c1"># Move accessed element to the highest position</span>
+                <span class="n">arr</span><span class="p">[</span><span class="n">way</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">lru</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">arr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; [LRU] </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lru</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span>
+                <span class="n">arr</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span>
+            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot; [LRU] All elements must be smaller than N_WAY:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">arr</span><span class="p">)),</span> <span class="s2">&quot; [LRU] All elements must be unique&quot;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">NMRU</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">way</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nmru</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Get the next one but not the most recently used</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nmru</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">way</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot; [NMRU] Not the most recently used </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nmru</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="si">}</span><span class="s2"> (mru+1)&quot;</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">PLRU</span><span class="p">:</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span><span class="o">.</span><span class="n">bit_length</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">direction</span> <span class="o">=</span> <span class="n">way</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span><span class="o">.</span><span class="n">bit_length</span><span class="p">()</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">level</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">plru_tree</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="n">direction</span>  <span class="c1"># Update the node</span>
+                <span class="n">node</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">node</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">direction</span>  <span class="c1"># Move to next level</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; [PLRU] Tree @ index </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2"> --&gt; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">plru_tree</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SetAssociativeCache.clear">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.SetAssociativeCache.clear">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear the Set Associative Cache.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tags</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dirty</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">FIFO</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fifo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">LRU</span><span class="p">:</span>
+            <span class="n">init_row</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lru</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">init_row</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">NMRU</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nmru</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">PLRU</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plru_tree</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SetAssociativeCache.read">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.SetAssociativeCache.read">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read from the Set Associative Cache.</span>
+
+<span class="sd">        :param addr: Address to read from</span>
+<span class="sd">        :type addr: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_addr</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="p">(</span><span class="n">addr</span> <span class="o">&gt;&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_bits</span><span class="p">)</span> <span class="o">%</span> <span class="p">((</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines_bits</span><span class="p">))</span>
+        <span class="n">tag_addr</span> <span class="o">=</span> <span class="n">addr</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines_bits</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_bits</span><span class="p">)</span>
+        <span class="n">empty_positions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">==</span> <span class="kc">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># noqa: E712</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">index</span><span class="p">]):</span>
+            <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">for</span> <span class="n">way</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">==</span> <span class="n">tag_addr</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">track_access</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">,</span> <span class="n">AccessType</span><span class="o">.</span><span class="n">HIT</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">hits</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot; [READ - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Hit @ Address&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2"> /&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; Way </span><span class="si">{</span><span class="n">way</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                    <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">break</span>
+            <span class="k">if</span> <span class="n">found</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">index</span><span class="p">]):</span>  <span class="c1"># Check whether there&#39;s an</span>
+                    <span class="c1"># empty way in the cache</span>
+                    <span class="n">way</span> <span class="o">=</span> <span class="n">empty_positions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">track_access</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">,</span> <span class="n">AccessType</span><span class="o">.</span><span class="n">MISS</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">update_miss</span><span class="p">(</span><span class="s2">&quot;compulsory&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot; [READ - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Compulsory miss @ Address&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; / Allocated way </span><span class="si">{</span><span class="n">way</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>  <span class="c1"># No more ways available, lets replace...</span>
+                    <span class="n">way</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_replacement</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">track_access</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">,</span> <span class="n">AccessType</span><span class="o">.</span><span class="n">MISS</span><span class="p">)</span>
+                    <span class="c1"># Distinguish between conflict vs capacity miss</span>
+                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">update_miss</span><span class="p">(</span><span class="s2">&quot;capacity&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot; [READ - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Capacity miss @ Address&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot; / Allocated way </span><span class="si">{</span><span class="n">way</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">update_miss</span><span class="p">(</span><span class="s2">&quot;conflict&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot; [READ - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Conflict miss @ Address&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot; / Allocated way </span><span class="si">{</span><span class="n">way</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">way</span> <span class="o">=</span> <span class="n">empty_positions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">track_access</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">,</span> <span class="n">AccessType</span><span class="o">.</span><span class="n">MISS</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_miss</span><span class="p">(</span><span class="s2">&quot;compulsory&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot; [READ - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Compulsory miss @ Address&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; / Allocated way </span><span class="si">{</span><span class="n">way</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SetAssociativeCache.write">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.SetAssociativeCache.write">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write to the Set Associative Cache.</span>
+
+<span class="sd">        :param addr: Address to write to</span>
+<span class="sd">        :type addr: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_addr</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="p">(</span><span class="n">addr</span> <span class="o">&gt;&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_bits</span><span class="p">)</span> <span class="o">%</span> <span class="p">((</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines_bits</span><span class="p">))</span>
+        <span class="n">tag_addr</span> <span class="o">=</span> <span class="n">addr</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines_bits</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_bits</span><span class="p">)</span>
+        <span class="n">empty_positions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">==</span> <span class="kc">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># noqa: E712</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">index</span><span class="p">]):</span>
+            <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">for</span> <span class="n">way</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_way</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">==</span> <span class="n">tag_addr</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">track_access</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">,</span> <span class="n">AccessType</span><span class="o">.</span><span class="n">HIT</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">hits</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot; [WRITE - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Hit @ Address&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2"> /&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; Way </span><span class="si">{</span><span class="n">way</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dirty</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">break</span>
+            <span class="k">if</span> <span class="n">found</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">index</span><span class="p">]):</span>  <span class="c1"># Check whether there&#39;s an</span>
+                    <span class="c1"># empty way in the cache</span>
+                    <span class="n">way</span> <span class="o">=</span> <span class="n">empty_positions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">track_access</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">,</span> <span class="n">AccessType</span><span class="o">.</span><span class="n">MISS</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">update_miss</span><span class="p">(</span><span class="s2">&quot;compulsory&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dirty</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot; [WRITE - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Compulsory miss @ Address&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; / Allocated way </span><span class="si">{</span><span class="n">way</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>  <span class="c1"># No more ways available, lets replace...</span>
+                    <span class="n">way</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_replacement</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">track_access</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">,</span> <span class="n">AccessType</span><span class="o">.</span><span class="n">MISS</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dirty</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="c1"># Distinguish between conflict vs capacity miss</span>
+                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">update_miss</span><span class="p">(</span><span class="s2">&quot;capacity&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot; [WRITE - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Capacity miss @ Address&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot; / Allocated way </span><span class="si">{</span><span class="n">way</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">update_miss</span><span class="p">(</span><span class="s2">&quot;conflict&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot; [WRITE - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Conflict miss @ Address&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot; / Allocated way </span><span class="si">{</span><span class="n">way</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">way</span> <span class="o">=</span> <span class="n">empty_positions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">track_access</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">,</span> <span class="n">AccessType</span><span class="o">.</span><span class="n">MISS</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_miss</span><span class="p">(</span><span class="s2">&quot;compulsory&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dirty</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">way</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot; [WRITE - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Compulsory miss @ Address&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; / Allocated way </span><span class="si">{</span><span class="n">way</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="FullyAssociativeCache">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.FullyAssociativeCache">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FullyAssociativeCache</span><span class="p">(</span><span class="n">Cache</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for Fully Associative Cache.&quot;&quot;&quot;</span>
+    <span class="n">_inst_cnt</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">replacement_policy</span><span class="p">:</span> <span class="n">ReplacementPolicy</span> <span class="o">=</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">RANDOM</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the Fully Associative Cache with given parameters.</span>
+
+<span class="sd">        :param name: Name of the cache instance, defaults to None</span>
+<span class="sd">        :type name: str, optional</span>
+<span class="sd">        :param replacement_policy: Replacement policy for the cache, defaults to ReplacementPolicy.RANDOM</span>
+<span class="sd">        :type replacement_policy: ReplacementPolicy, optional</span>
+<span class="sd">        :raises CacheIllegalParameter: If replacement policy is invalid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># Default name handling</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;fully_associative_cache_</span><span class="si">{</span><span class="n">FullyAssociativeCache</span><span class="o">.</span><span class="n">_inst_cnt</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">SetAssociativeCache</span><span class="o">.</span><span class="n">_inst_cnt</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_topology</span> <span class="o">=</span> <span class="s2">&quot;fully_associative&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">=</span> <span class="n">replacement_policy</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache_size_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache_size_kib</span> <span class="o">*</span> <span class="mi">1024</span>  <span class="c1"># in bytes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache_size_set</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache_line_bytes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tag_size_bits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ADDR_WIDTH</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_bits</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tag_size_kib</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">tag_size_bits</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">)</span> <span class="o">/</span> <span class="mi">8</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1024</span>
+
+        <span class="c1"># Basic checks</span>
+        <span class="k">if</span> <span class="n">replacement_policy</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">NONE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">CacheIllegalParameter</span><span class="p">(</span><span class="s2">&quot;replacement_policy&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">replacement_policy</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">PLRU</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">CacheIllegalParameter</span><span class="p">(</span>
+                <span class="s2">&quot;cache_size_kib&quot;</span>
+            <span class="p">)</span>  <span class="c1"># PLRU requires even entries lines</span>
+
+        <span class="c1"># Memories</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tags</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dirty</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">FIFO</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fifo</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">LRU</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lru</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">NMRU</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nmru</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">PLRU</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plru_tree</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;FullyAssociativeCache&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Created new fully Associative Cache - Writeback&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Instance name  : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Replacement Policy  : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_rp</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Cache size kib : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_size_kib</span><span class="si">}</span><span class="s2"> KiB&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Tag size kib   : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tag_size_kib</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> KiB&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Cache line size: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_line_bytes</span><span class="si">}</span><span class="s2"> bytes&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Number of lines : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - Tag size width : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tag_size_bits</span><span class="si">}</span><span class="s2"> bits&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot; - Ratio tag mem/data size: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">tag_size_kib</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">cache_size_kib</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="FullyAssociativeCache.clear">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.FullyAssociativeCache.clear">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear the Fully Associative Cache.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tags</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dirty</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">FIFO</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fifo</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">LRU</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lru</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">NMRU</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nmru</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">PLRU</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plru_tree</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FullyAssociativeCache.find_matching_valid_entry">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.FullyAssociativeCache.find_matching_valid_entry">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">find_matching_valid_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find a matching valid entry for the given address.</span>
+
+<span class="sd">        :param addr: Address to find</span>
+<span class="sd">        :type addr: int</span>
+<span class="sd">        :return: Indices of matching valid entries</span>
+<span class="sd">        :rtype: np.ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">matching_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span> <span class="o">==</span> <span class="n">addr</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">matching_indices</span></div>
+
+
+<div class="viewcode-block" id="FullyAssociativeCache.get_replacement">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.FullyAssociativeCache.get_replacement">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_replacement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the replacement index based on the replacement policy.</span>
+
+<span class="sd">        :param index: Index of the cache line</span>
+<span class="sd">        :type index: int</span>
+<span class="sd">        :return: Replacement index</span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; [GET REPLACEMENT] Line = </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2"> / Policy = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_rp</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">RANDOM</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">FIFO</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fifo</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">LRU</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lru</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">NMRU</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nmru</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">PLRU</span><span class="p">:</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="o">.</span><span class="n">bit_length</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>  <span class="c1"># log2(n_lines) levels</span>
+                <span class="n">direction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plru_tree</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+                <span class="n">node</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">node</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">direction</span>  <span class="c1"># Move left (0) or right (1)</span>
+            <span class="k">return</span> <span class="n">node</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># Convert tree node to cache way index</span></div>
+
+
+<div class="viewcode-block" id="FullyAssociativeCache.track_access">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.FullyAssociativeCache.track_access">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">track_access</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">access_type</span><span class="p">:</span> <span class="n">AccessType</span> <span class="o">=</span> <span class="n">AccessType</span><span class="o">.</span><span class="n">HIT</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Track access for the given index.</span>
+
+<span class="sd">        :param index: Index of the cache line</span>
+<span class="sd">        :type index: int</span>
+<span class="sd">        :param access_type: Type of access (HIT or MISS)</span>
+<span class="sd">        :type access_type: AccessType</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; [TRACK ACCESS] Line = </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2"> / Policy = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_rp</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">RANDOM</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">FIFO</span><span class="p">:</span>
+            <span class="n">latest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fifo</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; [FIFO] Latest: </span><span class="si">{</span><span class="n">latest</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">access_type</span> <span class="o">==</span> <span class="n">AccessType</span><span class="o">.</span><span class="n">MISS</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fifo</span> <span class="o">=</span> <span class="n">latest</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">latest</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span> <span class="k">else</span> <span class="mi">0</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; [FIFO] Now oldest: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">fifo</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">LRU</span><span class="p">:</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lru</span>
+            <span class="n">accessed_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lru</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+            <span class="c1"># If it&#39;s already the highest, do nothing</span>
+            <span class="k">if</span> <span class="n">accessed_value</span> <span class="o">!=</span> <span class="nb">max</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span>
+                <span class="c1"># Decrease values that are greater than the accessed value</span>
+                <span class="n">arr</span><span class="p">[</span><span class="n">arr</span> <span class="o">&gt;</span> <span class="n">accessed_value</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="c1"># Move accessed element to the highest position</span>
+                <span class="n">arr</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">lru</span> <span class="o">=</span> <span class="n">arr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; [LRU] </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lru</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span>
+                <span class="n">arr</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span>
+            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot; [LRU] All elements must be smaller than NO ENTRIES: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span>
+            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot; [LRU] All elements must be unique </span><span class="si">{</span><span class="n">arr</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">NMRU</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">index</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nmru</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Get the next one but not the most recently used</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nmru</span> <span class="o">=</span> <span class="n">index</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; [NMRU] Not the most recently used </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nmru</span><span class="si">}</span><span class="s2"> (mru+1)&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rp</span> <span class="o">==</span> <span class="n">ReplacementPolicy</span><span class="o">.</span><span class="n">PLRU</span><span class="p">:</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="o">.</span><span class="n">bit_length</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">direction</span> <span class="o">=</span> <span class="n">index</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="o">.</span><span class="n">bit_length</span><span class="p">()</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">level</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">plru_tree</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="n">direction</span>  <span class="c1"># Update the node</span>
+                <span class="n">node</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">node</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">direction</span>  <span class="c1"># Move to next level</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; [PLRU] Tree @ index </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2"> --&gt; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">plru_tree</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FullyAssociativeCache.read">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.FullyAssociativeCache.read">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read from the Fully Associative Cache.</span>
+
+<span class="sd">        :param addr: Address to read from</span>
+<span class="sd">        :type addr: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_addr</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+        <span class="n">tag_addr</span> <span class="o">=</span> <span class="n">addr</span> <span class="o">&gt;&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_bits</span>
+
+        <span class="c1"># Look for a hit</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_matching_valid_entry</span><span class="p">(</span><span class="n">tag_addr</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">index</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hits</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">track_access</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">AccessType</span><span class="o">.</span><span class="n">HIT</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot; [READ - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Hit @ Address </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">):</span>  <span class="c1"># If there&#39;s no hit and we&#39;re full...</span>
+            <span class="n">replacement_entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_replacement</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">track_access</span><span class="p">(</span><span class="n">replacement_entry</span><span class="p">,</span> <span class="n">AccessType</span><span class="o">.</span><span class="n">MISS</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">replacement_entry</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">replacement_entry</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_miss</span><span class="p">(</span><span class="s2">&quot;capacity&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; [READ - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Capacity miss @ Address </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># If there&#39;s not hit and we&#39;re NOT full</span>
+            <span class="n">empty_position</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid</span> <span class="o">==</span> <span class="kc">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># noqa: E712</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">track_access</span><span class="p">(</span><span class="n">empty_position</span><span class="p">,</span> <span class="n">AccessType</span><span class="o">.</span><span class="n">MISS</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">empty_position</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">empty_position</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_miss</span><span class="p">(</span><span class="s2">&quot;compulsory&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot; [READ - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Compulsory miss @ Address </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FullyAssociativeCache.write">
+<a class="viewcode-back" href="../../cache_performance_model.html#cache_performance_model.cache_model.FullyAssociativeCache.write">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write to the Fully Associative Cache.</span>
+
+<span class="sd">        :param addr: Address to write to</span>
+<span class="sd">        :type addr: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_addr</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+        <span class="n">tag_addr</span> <span class="o">=</span> <span class="n">addr</span> <span class="o">&gt;&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl_bits</span>
+
+        <span class="c1"># Look for a hit</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_matching_valid_entry</span><span class="p">(</span><span class="n">tag_addr</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">index</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hits</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">track_access</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">AccessType</span><span class="o">.</span><span class="n">HIT</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dirty</span><span class="p">[</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot; [WRITE - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Hit @ Address </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2"> / Line </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">):</span>  <span class="c1"># If there&#39;s no hit and we&#39;re full...</span>
+            <span class="n">replacement_entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_replacement</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">track_access</span><span class="p">(</span><span class="n">replacement_entry</span><span class="p">,</span> <span class="n">AccessType</span><span class="o">.</span><span class="n">MISS</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">replacement_entry</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">replacement_entry</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dirty</span><span class="p">[</span><span class="n">replacement_entry</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_miss</span><span class="p">(</span><span class="s2">&quot;capacity&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot; [WRITE - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Capacity miss @ Address </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># If there&#39;s not hit and we&#39;re NOT full</span>
+            <span class="n">empty_position</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid</span> <span class="o">==</span> <span class="kc">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># noqa: E712</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">track_access</span><span class="p">(</span><span class="n">empty_position</span><span class="p">,</span> <span class="n">AccessType</span><span class="o">.</span><span class="n">MISS</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">empty_position</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_addr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">valid</span><span class="p">[</span><span class="n">empty_position</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dirty</span><span class="p">[</span><span class="n">empty_position</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_miss</span><span class="p">(</span><span class="s2">&quot;compulsory&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot; [WRITE - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">] Compulsory miss @ Address </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Anderson Ignacio da Silva.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
